@@ -17,7 +17,7 @@ import app.morphe.util.findMutableMethodOf
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
-import com.android.tools.smali.dexlib2.iface.instruction.formats.Instruction35c
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 private const val EXTENSION_CLASS_DESCRIPTOR = "Lapp/morphe/extension/tiktok/spoof/sim/SpoofSimPatch;"
@@ -50,9 +50,13 @@ val simSpoofPatch = bytecodePatch(
             for (method in classDef.methods) {
                 val implementation = method.implementation ?: continue
                 implementation.instructions.forEachIndexed { index, instruction ->
-                    if (instruction.opcode != Opcode.INVOKE_VIRTUAL) return@forEachIndexed
+                    if (instruction.opcode != Opcode.INVOKE_VIRTUAL &&
+                        instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE
+                    ) {
+                        return@forEachIndexed
+                    }
 
-                    val methodReference = (instruction as Instruction35c).reference as MethodReference
+                    val methodReference = (instruction as ReferenceInstruction).reference as MethodReference
                     if (methodReference.definingClass != "Landroid/telephony/TelephonyManager;") {
                         return@forEachIndexed
                     }
