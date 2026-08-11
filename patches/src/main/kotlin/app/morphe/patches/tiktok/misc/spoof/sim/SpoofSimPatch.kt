@@ -142,7 +142,7 @@ val simSpoofPatch = bytecodePatch(
 
                         if (isMapPut || isJsonPut || isBundlePutString) {
                             requestPatches.getOrPut(method) { ArrayDeque() }
-                                .add(index to (instruction.registerB to instruction.registerC))
+                                .add(index to (instruction.registerD to instruction.registerE))
                         }
                     }
                 }
