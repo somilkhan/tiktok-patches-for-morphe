@@ -15,10 +15,7 @@ import java.util.TimeZone;
 @SuppressWarnings("unused")
 public class SpoofSimPatch {
     private static boolean isContextNotSet(String fieldSpoofed) {
-        if (Utils.getContext() != null) {
-            return false;
-        }
-
+        if (Utils.getContext() != null) return false;
         Logger.printException(() -> "Context is not yet set, cannot spoof: " + fieldSpoofed, null);
         return true;
     }
@@ -29,71 +26,109 @@ public class SpoofSimPatch {
 
     public static String getCountryIso(String value) {
         if (isContextNotSet("countryIso")) return value;
-
         if (Settings.SIM_SPOOF.get()) {
             String iso = Settings.SIM_SPOOF_ISO.get();
             Logger.printDebug(() -> "Spoofing countryIso from: " + value + " to: " + iso);
             return iso;
         }
-
         return value;
     }
 
     public static String getOperator(String value) {
         if (isContextNotSet("MCC-MNC")) return value;
-
         if (Settings.SIM_SPOOF.get()) {
             String mccMnc = Settings.SIMSPOOF_MCCMNC.get();
             Logger.printDebug(() -> "Spoofing sim MCC-MNC from: " + value + " to: " + mccMnc);
             return mccMnc;
         }
-
         return value;
     }
 
     public static String getOperatorName(String value) {
         if (isContextNotSet("operatorName")) return value;
-
         if (Settings.SIM_SPOOF.get()) {
             String operator = Settings.SIMSPOOF_OP_NAME.get();
             Logger.printDebug(() -> "Spoofing sim operatorName from: " + value + " to: " + operator);
             return operator;
         }
-
         return value;
     }
 
-    /**
-     * Keeps Java/Android locale signals consistent with the selected spoofed country.
-     * This is intentionally limited to the TikTok process by the bytecode hook.
-     */
     public static Locale getDefaultLocale(Locale value) {
         if (!enabled()) return value;
-
         String iso = Settings.SIM_SPOOF_ISO.get();
         if (iso == null || !iso.matches("[a-zA-Z]{2}")) return value;
+        return new Locale("en", iso.toUpperCase(Locale.ROOT));
+    }
 
-        Locale spoofed = new Locale("en", iso.toUpperCase(Locale.ROOT));
-        Logger.printDebug(() -> "Spoofing default locale from: " + value + " to: " + spoofed);
-        return spoofed;
+    public static TimeZone getDefaultTimeZone(TimeZone value) {
+        if (!enabled()) return value;
+        String iso = Settings.SIM_SPOOF_ISO.get();
+        if (iso == null) return value;
+        String zoneId = timezoneFor(iso.toUpperCase(Locale.ROOT));
+        return zoneId == null ? value : TimeZone.getTimeZone(zoneId);
     }
 
     /**
-     * Keeps the process timezone aligned with the spoofed region where a practical
-     * single representative timezone exists. Unknown countries retain the device TZ.
+     * TikTok repeats region identity in request parameters. Normalize those fields
+     * at the final container insertion point so they remain consistent with the
+     * selected SIM/region preset instead of only spoofing TelephonyManager.
      */
-    public static TimeZone getDefaultTimeZone(TimeZone value) {
-        if (!enabled()) return value;
+    public static Object spoofRequestParam(Object key, Object value) {
+        if (!enabled() || !(key instanceof String) || !(value instanceof String)) return value;
 
-        String iso = Settings.SIM_SPOOF_ISO.get();
+        String k = (String) key;
+        String iso = normalizedIso();
         if (iso == null) return value;
 
-        String zoneId = timezoneFor(iso.toUpperCase(Locale.ROOT));
-        if (zoneId == null) return value;
+        switch (k) {
+            case "current_region":
+            case "sys_region":
+            case "residence":
+            case "carrier_region":
+            case "op_region":
+            case "region":
+                return iso;
+            case "reg_store_region":
+                return iso.toLowerCase(Locale.ROOT);
+            case "locale":
+                return "en";
+            case "language":
+            case "app_language":
+            case "content_language":
+                return "en";
+            case "timezone_name": {
+                String zone = timezoneFor(iso);
+                return zone == null ? value : zone;
+            }
+            case "timezone_offset": {
+                String zone = timezoneFor(iso);
+                if (zone == null) return value;
+                return String.valueOf(TimeZone.getTimeZone(zone).getRawOffset() / 1000);
+            }
+            case "mcc_mnc":
+                return safeMccMnc(value);
+            case "carrier_region_v2":
+                return safeMcc(value);
+            default:
+                return value;
+        }
+    }
 
-        TimeZone spoofed = TimeZone.getTimeZone(zoneId);
-        Logger.printDebug(() -> "Spoofing default timezone from: " + value.getID() + " to: " + zoneId);
-        return spoofed;
+    private static String normalizedIso() {
+        String iso = Settings.SIM_SPOOF_ISO.get();
+        if (iso == null || !iso.matches("[a-zA-Z]{2}")) return null;
+        return iso.toUpperCase(Locale.ROOT);
+    }
+
+    private static String safeMccMnc(String fallback) {
+        String value = Settings.SIMSPOOF_MCCMNC.get();
+        return value != null && value.matches("\\d{5,6}") ? value : fallback;
+    }
+
+    private static String safeMcc(String fallback) {
+        String value = safeMccMnc(fallback);
+        return value.length() >= 3 ? value.substring(0, 3) : fallback;
     }
 
     private static String timezoneFor(String iso) {
@@ -134,8 +169,6 @@ public class SpoofSimPatch {
     }
 
     public static int getCarrierId(int value) {
-        // Carrier IDs are not country IDs. Do not invent one for a preset.
-        // Returning the original value avoids creating an internally inconsistent carrier identity.
         return value;
     }
 }
