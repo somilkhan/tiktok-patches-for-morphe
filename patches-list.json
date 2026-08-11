@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "1.1.0",
   "appNames": {
     "com.zhiliaoapp.musically": "TikTok"
   },
@@ -615,7 +615,7 @@
     },
     {
       "name": "SIM spoof",
-      "description": "Spoofs SIM country/operator information and keeps TikTok's locale, timezone, and carrier-name signals consistent with the selected preset.",
+      "description": "Spoofs SIM, locale, timezone, and TikTok request region signals using the selected region preset.",
       "use": true,
       "dependencies": [
         "BytecodePatch",

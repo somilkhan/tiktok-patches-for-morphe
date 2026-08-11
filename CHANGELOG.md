@@ -1,3 +1,25 @@
+# [1.1.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.0.1...v1.1.0) (2026-08-11)
+
+
+### Bug Fixes
+
+* restore compile-safe region spoof patch ([cbe54f6](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/cbe54f675677f77163f099add384ad05aadbf823))
+* **spoof:** cast Object to String for safeMccMnc/safeMcc ([165810f](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/165810f287d840df6b93fecbc52207f2fef973d3))
+* **spoof:** use registerD/registerE for FiveRegisterInstruction ([295b602](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/295b60262653e7d7ae32ee4fac1b751da3d00cba))
+
+
+### Features
+
+* **tiktok:** add forced region request parameter spoofing ([2b3da79](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/2b3da79d0a66d81c056ac71790d468be052a569f))
+* **tiktok:** hook request region fields and locale signals ([af9cf65](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/af9cf65228066537425ebf917b24ded6a99f7b49))
+* **tiktok:** Jaggu-level region spoof for 46.2.3 ([a8673e0](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/a8673e095140d886221327d304add14a29a68bc8))
+
+
+
+
+
+## 1.1.0
+
 ## [1.0.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.0.0...v1.0.1) (2026-08-11)
 
 
