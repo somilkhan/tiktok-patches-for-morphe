@@ -21,11 +21,14 @@ import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 private const val EXTENSION_CLASS_DESCRIPTOR = "Lapp/morphe/extension/tiktok/spoof/sim/SpoofSimPatch;"
+private const val TELEPHONY = "Landroid/telephony/TelephonyManager;"
+private const val LOCALE = "Ljava/util/Locale;"
+private const val TIME_ZONE = "Ljava/util/TimeZone;"
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Spoofs SIM country and operator information retrieved by TikTok, with country presets for easier setup.",
+    description = "Spoofs SIM country/operator information and keeps TikTok's locale, timezone, and carrier-name signals consistent with the selected preset.",
     default = true,
 ) {
     dependsOn(
@@ -36,33 +39,68 @@ val simSpoofPatch = bytecodePatch(
     compatibleWith(*AppCompatibilities.tiktok4623())
 
     execute {
-        val replacements = mapOf(
+        val stringReplacements = mapOf(
             "getSimCountryIso" to "getCountryIso",
             "getNetworkCountryIso" to "getCountryIso",
             "getSimOperator" to "getOperator",
             "getNetworkOperator" to "getOperator",
+            "getNetworkOperatorForPhone" to "getOperator",
             "getSimOperatorName" to "getOperatorName",
             "getNetworkOperatorName" to "getOperatorName",
         )
 
-        val patchesByMethod = linkedMapOf<Method, ArrayDeque<Pair<Int, String>>>()
+        val objectReplacements = mapOf(
+            LOCALE to "getDefaultLocale",
+            TIME_ZONE to "getDefaultTimeZone",
+        )
+
+        val patchesByMethod = linkedMapOf<Method, ArrayDeque<Triple<Int, String, String>>>()
+        val carrierNamePatches = linkedMapOf<Method, ArrayDeque<Int>>()
+        val carrierIdPatches = linkedMapOf<Method, ArrayDeque<Int>>()
+
         classDefForEach { classDef ->
             for (method in classDef.methods) {
                 val implementation = method.implementation ?: continue
                 implementation.instructions.forEachIndexed { index, instruction ->
                     if (instruction.opcode != Opcode.INVOKE_VIRTUAL &&
-                        instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE
+                        instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE &&
+                        instruction.opcode != Opcode.INVOKE_STATIC
                     ) {
                         return@forEachIndexed
                     }
 
                     val methodReference = (instruction as ReferenceInstruction).reference as MethodReference
-                    if (methodReference.definingClass != "Landroid/telephony/TelephonyManager;") {
-                        return@forEachIndexed
+
+                    if (methodReference.definingClass == TELEPHONY) {
+                        when {
+                            stringReplacements.containsKey(methodReference.name) &&
+                                methodReference.returnType == "Ljava/lang/String;" -> {
+                                patchesByMethod.getOrPut(method) { ArrayDeque() }
+                                    .add(Triple(index, stringReplacements.getValue(methodReference.name), "object"))
+                            }
+
+                            (methodReference.name == "getSimCarrierIdName" ||
+                                methodReference.name == "getSimSpecificCarrierIdName") &&
+                                methodReference.returnType == "Ljava/lang/CharSequence;" -> {
+                                carrierNamePatches.getOrPut(method) { ArrayDeque() }.add(index)
+                            }
+
+                            (methodReference.name == "getSimCarrierId" ||
+                                methodReference.name == "getSimSpecificCarrierId") &&
+                                methodReference.returnType == "I" -> {
+                                carrierIdPatches.getOrPut(method) { ArrayDeque() }.add(index)
+                            }
+                        }
                     }
 
-                    val replacement = replacements[methodReference.name] ?: return@forEachIndexed
-                    patchesByMethod.getOrPut(method) { ArrayDeque() }.add(index to replacement)
+                    if (instruction.opcode == Opcode.INVOKE_STATIC &&
+                        (methodReference.definingClass == LOCALE || methodReference.definingClass == TIME_ZONE) &&
+                        methodReference.name == "getDefault" &&
+                        (methodReference.returnType == LOCALE || methodReference.returnType == TIME_ZONE)
+                    ) {
+                        patchesByMethod.getOrPut(method) { ArrayDeque() }
+                            .add(Triple(index, objectReplacements.getValue(methodReference.definingClass), "object"))
+                    }
                 }
             }
         }
@@ -70,14 +108,44 @@ val simSpoofPatch = bytecodePatch(
         patchesByMethod.forEach { (method, patches) ->
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
-                val (index, replacement) = patches.removeLast()
+                val (index, replacement, _) = patches.removeLast()
                 val resultRegister = mutableMethod.getInstruction<OneRegisterInstruction>(index + 1).registerA
 
                 mutableMethod.addInstructions(
                     index + 2,
                     """
-                        invoke-static { v$resultRegister }, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;
+                        invoke-static { v$resultRegister }, $EXTENSION_CLASS_DESCRIPTOR->$replacement(${if (replacement == "getCountryIso" || replacement == "getOperator" || replacement == "getOperatorName") "Ljava/lang/String;" else if (replacement == "getDefaultLocale") "Ljava/util/Locale;" else "Ljava/util/TimeZone;"})${if (replacement == "getCountryIso" || replacement == "getOperator" || replacement == "getOperatorName") "Ljava/lang/String;" else if (replacement == "getDefaultLocale") "Ljava/util/Locale;" else "Ljava/util/TimeZone;"};
                         move-result-object v$resultRegister
+                    """,
+                )
+            }
+        }
+
+        carrierNamePatches.forEach { (method, patches) ->
+            val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
+            while (patches.isNotEmpty()) {
+                val index = patches.removeLast()
+                val resultRegister = mutableMethod.getInstruction<OneRegisterInstruction>(index + 1).registerA
+                mutableMethod.addInstructions(
+                    index + 2,
+                    """
+                        invoke-static { v$resultRegister }, $EXTENSION_CLASS_DESCRIPTOR->getCarrierIdName(Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
+                        move-result-object v$resultRegister
+                    """,
+                )
+            }
+        }
+
+        carrierIdPatches.forEach { (method, patches) ->
+            val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
+            while (patches.isNotEmpty()) {
+                val index = patches.removeLast()
+                val resultRegister = mutableMethod.getInstruction<OneRegisterInstruction>(index + 1).registerA
+                mutableMethod.addInstructions(
+                    index + 2,
+                    """
+                        invoke-static { v$resultRegister }, $EXTENSION_CLASS_DESCRIPTOR->getCarrierId(I)I;
+                        move-result v$resultRegister
                     """,
                 )
             }
