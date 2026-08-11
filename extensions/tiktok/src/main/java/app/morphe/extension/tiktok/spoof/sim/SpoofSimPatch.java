@@ -107,9 +107,9 @@ public class SpoofSimPatch {
                 return String.valueOf(TimeZone.getTimeZone(zone).getRawOffset() / 1000);
             }
             case "mcc_mnc":
-                return safeMccMnc(value);
+                return safeMccMnc((String) value);
             case "carrier_region_v2":
-                return safeMcc(value);
+                return safeMcc((String) value);
             default:
                 return value;
         }
