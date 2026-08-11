@@ -10,6 +10,8 @@ jobs:
   release:
     name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -27,3 +29,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew :patches:buildAndroid --no-daemon
+
+      - name: Upload .mpp patch bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: morphe-patches
+          path: patches/build/libs/patches-*.mpp
+          if-no-files-found: error
+          retention-days: 14
