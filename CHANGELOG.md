@@ -1,3 +1,16 @@
+## [1.1.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.1.1...v1.1.2) (2026-08-11)
+
+
+### Bug Fixes
+
+* **spoof:** remove request param scan to prevent OOM on large APKs ([454471d](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/454471de0d0f842f0afb4783d3470509b8ea08f4))
+
+
+
+
+
+## 1.1.2
+
 ## [1.1.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.1.0...v1.1.1) (2026-08-11)
 
 
