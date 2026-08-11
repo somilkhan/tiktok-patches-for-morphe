@@ -49,12 +49,7 @@ val simSpoofPatch = bytecodePatch(
             "getNetworkOperatorName" to "getOperatorName",
         )
 
-        val objectReplacements = mapOf(
-            LOCALE to "getDefaultLocale",
-            TIME_ZONE to "getDefaultTimeZone",
-        )
-
-        val patchesByMethod = linkedMapOf<Method, ArrayDeque<Triple<Int, String, String>>>()
+        val patchesByMethod = linkedMapOf<Method, ArrayDeque<Pair<Int, String>>>()
         val carrierNamePatches = linkedMapOf<Method, ArrayDeque<Int>>()
         val carrierIdPatches = linkedMapOf<Method, ArrayDeque<Int>>()
 
@@ -63,8 +58,7 @@ val simSpoofPatch = bytecodePatch(
                 val implementation = method.implementation ?: continue
                 implementation.instructions.forEachIndexed { index, instruction ->
                     if (instruction.opcode != Opcode.INVOKE_VIRTUAL &&
-                        instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE &&
-                        instruction.opcode != Opcode.INVOKE_STATIC
+                        instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE
                     ) {
                         return@forEachIndexed
                     }
@@ -72,34 +66,26 @@ val simSpoofPatch = bytecodePatch(
                     val methodReference = (instruction as ReferenceInstruction).reference as MethodReference
 
                     if (methodReference.definingClass == TELEPHONY) {
-                        when {
-                            stringReplacements.containsKey(methodReference.name) &&
-                                methodReference.returnType == "Ljava/lang/String;" -> {
-                                patchesByMethod.getOrPut(method) { ArrayDeque() }
-                                    .add(Triple(index, stringReplacements.getValue(methodReference.name), "object"))
-                            }
-
-                            (methodReference.name == "getSimCarrierIdName" ||
-                                methodReference.name == "getSimSpecificCarrierIdName") &&
-                                methodReference.returnType == "Ljava/lang/CharSequence;" -> {
-                                carrierNamePatches.getOrPut(method) { ArrayDeque() }.add(index)
-                            }
-
-                            (methodReference.name == "getSimCarrierId" ||
-                                methodReference.name == "getSimSpecificCarrierId") &&
-                                methodReference.returnType == "I" -> {
-                                carrierIdPatches.getOrPut(method) { ArrayDeque() }.add(index)
-                            }
+                        if (stringReplacements.containsKey(methodReference.name) &&
+                            methodReference.returnType == "Ljava/lang/String;"
+                        ) {
+                            patchesByMethod.getOrPut(method) { ArrayDeque() }
+                                .add(index to stringReplacements.getValue(methodReference.name))
                         }
-                    }
 
-                    if (instruction.opcode == Opcode.INVOKE_STATIC &&
-                        (methodReference.definingClass == LOCALE || methodReference.definingClass == TIME_ZONE) &&
-                        methodReference.name == "getDefault" &&
-                        (methodReference.returnType == LOCALE || methodReference.returnType == TIME_ZONE)
-                    ) {
-                        patchesByMethod.getOrPut(method) { ArrayDeque() }
-                            .add(Triple(index, objectReplacements.getValue(methodReference.definingClass), "object"))
+                        if ((methodReference.name == "getSimCarrierIdName" ||
+                                methodReference.name == "getSimSpecificCarrierIdName") &&
+                            methodReference.returnType == "Ljava/lang/CharSequence;"
+                        ) {
+                            carrierNamePatches.getOrPut(method) { ArrayDeque() }.add(index)
+                        }
+
+                        if ((methodReference.name == "getSimCarrierId" ||
+                                methodReference.name == "getSimSpecificCarrierId") &&
+                            methodReference.returnType == "I"
+                        ) {
+                            carrierIdPatches.getOrPut(method) { ArrayDeque() }.add(index)
+                        }
                     }
                 }
             }
@@ -108,13 +94,14 @@ val simSpoofPatch = bytecodePatch(
         patchesByMethod.forEach { (method, patches) ->
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
-                val (index, replacement, _) = patches.removeLast()
+                val (index, replacement) = patches.removeLast()
                 val resultRegister = mutableMethod.getInstruction<OneRegisterInstruction>(index + 1).registerA
+                val returnType = "Ljava/lang/String;"
 
                 mutableMethod.addInstructions(
                     index + 2,
                     """
-                        invoke-static { v$resultRegister }, $EXTENSION_CLASS_DESCRIPTOR->$replacement(${if (replacement == "getCountryIso" || replacement == "getOperator" || replacement == "getOperatorName") "Ljava/lang/String;" else if (replacement == "getDefaultLocale") "Ljava/util/Locale;" else "Ljava/util/TimeZone;"})${if (replacement == "getCountryIso" || replacement == "getOperator" || replacement == "getOperatorName") "Ljava/lang/String;" else if (replacement == "getDefaultLocale") "Ljava/util/Locale;" else "Ljava/util/TimeZone;"};
+                        invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;
                         move-result-object v$resultRegister
                     """,
                 )
@@ -129,7 +116,7 @@ val simSpoofPatch = bytecodePatch(
                 mutableMethod.addInstructions(
                     index + 2,
                     """
-                        invoke-static { v$resultRegister }, $EXTENSION_CLASS_DESCRIPTOR->getCarrierIdName(Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
+                        invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getCarrierIdName(Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
                         move-result-object v$resultRegister
                     """,
                 )
@@ -144,7 +131,7 @@ val simSpoofPatch = bytecodePatch(
                 mutableMethod.addInstructions(
                     index + 2,
                     """
-                        invoke-static { v$resultRegister }, $EXTENSION_CLASS_DESCRIPTOR->getCarrierId(I)I;
+                        invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getCarrierId(I)I;
                         move-result v$resultRegister
                     """,
                 )
