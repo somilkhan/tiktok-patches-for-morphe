@@ -1,3 +1,16 @@
+## [1.0.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.0.0...v1.0.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* resolve SIM spoof inline smali lexer error ([d06dc2e](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/d06dc2ea0644303dacb24337b5403f05b423b1c3))
+
+
+
+
+
+## 1.0.1
+
 # 1.0.0 (2026-08-11)
 
 
