@@ -153,7 +153,9 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val (index, replacement) = patches.removeLast()
-                val resultRegister = mutableMethod.getInstruction<OneRegisterInstruction>(index + 1).registerA
+                val nextInstr = mutableMethod.getInstruction(index + 1)
+                if (nextInstr !is OneRegisterInstruction) continue
+                val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
                     invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;
                     move-result-object v$resultRegister
@@ -165,7 +167,9 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val index = patches.removeLast()
-                val resultRegister = mutableMethod.getInstruction<OneRegisterInstruction>(index + 1).registerA
+                val nextInstr = mutableMethod.getInstruction(index + 1)
+                if (nextInstr !is OneRegisterInstruction) continue
+                val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
                     invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getCarrierIdName(Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
                     move-result-object v$resultRegister
@@ -177,7 +181,9 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val index = patches.removeLast()
-                val resultRegister = mutableMethod.getInstruction<OneRegisterInstruction>(index + 1).registerA
+                val nextInstr = mutableMethod.getInstruction(index + 1)
+                if (nextInstr !is OneRegisterInstruction) continue
+                val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
                     invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getCarrierId(I)I;
                     move-result v$resultRegister
@@ -189,7 +195,9 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val index = patches.removeLast()
-                val resultRegister = mutableMethod.getInstruction<OneRegisterInstruction>(index + 1).registerA
+                val nextInstr = mutableMethod.getInstruction(index + 1)
+                if (nextInstr !is OneRegisterInstruction) continue
+                val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
                     invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getDefaultLocale(Ljava/util/Locale;)Ljava/util/Locale;
                     move-result-object v$resultRegister
@@ -201,7 +209,9 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val index = patches.removeLast()
-                val resultRegister = mutableMethod.getInstruction<OneRegisterInstruction>(index + 1).registerA
+                val nextInstr = mutableMethod.getInstruction(index + 1)
+                if (nextInstr !is OneRegisterInstruction) continue
+                val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
                     invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getDefaultTimeZone(Ljava/util/TimeZone;)Ljava/util/TimeZone;
                     move-result-object v$resultRegister
