@@ -1,3 +1,17 @@
+# [1.3.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.2.0...v1.3.0) (2026-08-12)
+
+
+### Features
+
+* **spoof:** add getDefaultLocale/getDefaultTimeZone back to extension ([d0723fc](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/d0723fcd6b6f742dcf8bd28de3f59e02f24f6e8d))
+* **spoof:** broaden hooks to all String methods in C35590hVz/C34171AbR + add Locale/TimeZone ([e57212d](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/e57212d98766e074b0baec86a62d4c2a20a9b06f))
+
+
+
+
+
+## 1.3.0
+
 # [1.2.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.1.2...v1.2.0) (2026-08-12)
 
 
