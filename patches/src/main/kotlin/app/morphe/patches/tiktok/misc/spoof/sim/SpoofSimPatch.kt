@@ -30,7 +30,7 @@ private const val TELEPHONY_WRAPPER = "LX/C34171AbR;"
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Spoofs TikTok 46.2.3 region identity via C35590hVz, C34171AbR, TelephonyManager, Locale, and TimeZone.",
+    description = "Spoofs TikTok 46.2.3 region identity via C35590hVz, C34171AbR, TelephonyManager, Locale, TimeZone, and broad LIZIZ resolvers.",
     default = true,
 ) {
     dependsOn(
@@ -63,6 +63,32 @@ val simSpoofPatch = bytecodePatch(
                         move-result-object v$returnReg
                     """)
                 }
+            }
+        }
+
+        // ── Layer A2: Broad LIZIZ resolver hook — any class, any params, returns String ──
+        // TikTok uses LIZIZ as a common getter pattern for region/config values.
+        val lizizPatches = linkedMapOf<Method, ArrayDeque<Int>>()
+        classDefForEach { classDef ->
+            for (method in classDef.methods) {
+                if (method.name != "LIZIZ" || method.returnType != "Ljava/lang/String;") continue
+                val implementation = method.implementation ?: continue
+                implementation.instructions.forEachIndexed { index, instruction ->
+                    if (instruction.opcode == Opcode.RETURN_OBJECT) {
+                        lizizPatches.getOrPut(method) { ArrayDeque() }.add(index)
+                    }
+                }
+            }
+        }
+        lizizPatches.forEach { (method, patches) ->
+            val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
+            while (patches.isNotEmpty()) {
+                val index = patches.removeLast()
+                val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
+                mutableMethod.addInstructions(index, """
+                    invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->getRegion(Ljava/lang/String;)Ljava/lang/String;
+                    move-result-object v$returnReg
+                """)
             }
         }
 
