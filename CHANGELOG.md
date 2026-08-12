@@ -1,3 +1,17 @@
+# [1.5.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.4.0...v1.5.0) (2026-08-12)
+
+
+### Features
+
+* **spoof:** v1.5.0 clean extension — remove locale/timezone dead code ([8fcd041](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/8fcd0414f58fdad80514ae6998a1640f8b6f9fa9))
+* **spoof:** v1.5.0 surgical Jaggu-style region resolver ([b3f911b](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/b3f911bf0731123e4febf240bac9110c055d7618))
+
+
+
+
+
+## 1.5.0
+
 # [1.4.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.3.0...v1.4.0) (2026-08-12)
 
 

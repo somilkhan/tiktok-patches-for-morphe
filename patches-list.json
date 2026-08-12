@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "appNames": {
     "com.zhiliaoapp.musically": "TikTok"
   },
@@ -615,7 +615,7 @@
     },
     {
       "name": "SIM spoof",
-      "description": "Spoofs TikTok 46.2.3 region identity via C35590hVz, C34171AbR, TelephonyManager, Locale, TimeZone, and broad LIZIZ resolvers.",
+      "description": "Surgical Jaggu-style region spoof for TikTok 46.2.3: C35590hVz.LIZ, C34171AbR, TelephonyManager.",
       "use": true,
       "dependencies": [
         "BytecodePatch",
