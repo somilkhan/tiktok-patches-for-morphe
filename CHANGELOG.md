@@ -1,3 +1,17 @@
+# [1.2.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.1.2...v1.2.0) (2026-08-12)
+
+
+### Features
+
+* **spoof:** add getRegion() for C35590hVz.LIZ() hook, remove dead code ([82830dc](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/82830dce5045f214ce0f750b1aec412e6e776e2f))
+* **spoof:** target TikTok 46.2.3 region resolver C35590hVz.LIZ() ([2dcb060](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/2dcb06013033fc2acf6d8602e97b3baf08ec3661))
+
+
+
+
+
+## 1.2.0
+
 ## [1.1.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.1.1...v1.1.2) (2026-08-11)
 
 
