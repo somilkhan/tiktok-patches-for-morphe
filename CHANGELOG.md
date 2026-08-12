@@ -1,3 +1,16 @@
+## [1.5.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.0...v1.5.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* **spoof:** make 46.2.3 BPEA telephony hook surgical ([9bd9bed](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/9bd9bed54eb81577b682e276134e2f3373428537))
+
+
+
+
+
+## 1.5.1
+
 # [1.5.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.4.0...v1.5.0) (2026-08-12)
 
 
