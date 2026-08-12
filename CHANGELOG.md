@@ -1,3 +1,16 @@
+# [1.4.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.3.0...v1.4.0) (2026-08-12)
+
+
+### Features
+
+* **spoof:** add broad LIZIZ resolver hook across entire app ([e8366d2](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/e8366d2c837d5485b99db28d09c3b425a03767a7))
+
+
+
+
+
+## 1.4.0
+
 # [1.3.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.2.0...v1.3.0) (2026-08-12)
 
 

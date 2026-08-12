@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-08-12T22:21:22",
-  "description": "# [1.3.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.2.0...v1.3.0) (2026-08-12)\n\n\n### Features\n\n* **spoof:** add getDefaultLocale/getDefaultTimeZone back to extension ([d0723fc](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/d0723fcd6b6f742dcf8bd28de3f59e02f24f6e8d))\n* **spoof:** broaden hooks to all String methods in C35590hVz/C34171AbR + add Locale/TimeZone ([e57212d](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/e57212d98766e074b0baec86a62d4c2a20a9b06f))\n\n\n\n\n\n## 1.3.0",
-  "download_url": "https://github.com/somilkhan/tiktok-patches-for-morphe/releases/download/v1.3.0/patches-1.3.0.mpp",
+  "created_at": "2026-08-12T22:52:50",
+  "description": "# [1.4.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.3.0...v1.4.0) (2026-08-12)\n\n\n### Features\n\n* **spoof:** add broad LIZIZ resolver hook across entire app ([e8366d2](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/e8366d2c837d5485b99db28d09c3b425a03767a7))\n\n\n\n\n\n## 1.4.0",
+  "download_url": "https://github.com/somilkhan/tiktok-patches-for-morphe/releases/download/v1.4.0/patches-1.4.0.mpp",
   "signature_download_url": "",
-  "version": "1.3.0"
+  "version": "1.4.0"
 }
