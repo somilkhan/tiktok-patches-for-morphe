@@ -9,9 +9,6 @@ import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.tiktok.settings.Settings;
 
-import java.util.Locale;
-import java.util.TimeZone;
-
 @SuppressWarnings("unused")
 public class SpoofSimPatch {
     private static boolean isContextNotSet(String fieldSpoofed) {
@@ -25,8 +22,9 @@ public class SpoofSimPatch {
     }
 
     /**
-     * Primary region resolver hook for TikTok 46.2.3.
-     * Called from X.C35590hVz (all String-returning methods).
+     * Region resolver hook for TikTok 46.2.3 X.C35590hVz.LIZ().
+     * This method reads fake_region > carrier_region > sys_region > app_language
+     * and returns the effective 2-letter region code.
      */
     public static String getRegion(String value) {
         return getCountryIso(value);
@@ -60,52 +58,6 @@ public class SpoofSimPatch {
             return operator;
         }
         return value;
-    }
-
-    public static Locale getDefaultLocale(Locale value) {
-        if (!enabled()) return value;
-        String iso = Settings.SIM_SPOOF_ISO.get();
-        if (iso == null || !iso.matches("[a-zA-Z]{2}")) return value;
-        return new Locale("en", iso.toUpperCase(Locale.ROOT));
-    }
-
-    public static TimeZone getDefaultTimeZone(TimeZone value) {
-        if (!enabled()) return value;
-        String iso = Settings.SIM_SPOOF_ISO.get();
-        if (iso == null) return value;
-        String zoneId = timezoneFor(iso.toUpperCase(Locale.ROOT));
-        return zoneId == null ? value : TimeZone.getTimeZone(zoneId);
-    }
-
-    private static String timezoneFor(String iso) {
-        switch (iso) {
-            case "US": return "America/New_York";
-            case "CA": return "America/Toronto";
-            case "GB": return "Europe/London";
-            case "IE": return "Europe/Dublin";
-            case "DE": return "Europe/Berlin";
-            case "FR": return "Europe/Paris";
-            case "IT": return "Europe/Rome";
-            case "ES": return "Europe/Madrid";
-            case "NL": return "Europe/Amsterdam";
-            case "SE": return "Europe/Stockholm";
-            case "NO": return "Europe/Oslo";
-            case "FI": return "Europe/Helsinki";
-            case "PL": return "Europe/Warsaw";
-            case "TR": return "Europe/Istanbul";
-            case "JP": return "Asia/Tokyo";
-            case "KR": return "Asia/Seoul";
-            case "CN": return "Asia/Shanghai";
-            case "SG": return "Asia/Singapore";
-            case "AU": return "Australia/Sydney";
-            case "NZ": return "Pacific/Auckland";
-            case "BR": return "America/Sao_Paulo";
-            case "MX": return "America/Mexico_City";
-            case "AR": return "America/Argentina/Buenos_Aires";
-            case "CL": return "America/Santiago";
-            case "IN": return "Asia/Kolkata";
-            default: return null;
-        }
     }
 
     public static CharSequence getCarrierIdName(CharSequence value) {
