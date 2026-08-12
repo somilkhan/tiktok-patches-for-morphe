@@ -68,11 +68,24 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // ── Layer B: BPEA telephony wrapper C34171AbR — ALL String-returning methods ──
+        // ── Layer B: BPEA telephony wrapper C34171AbR — exact verified methods ──
+        // Do NOT rewrite every String-returning method in this wrapper. The wrapper
+        // contains distinct country/operator/operator-name signals, so preserve the
+        // semantic mapping used by its TelephonyManager descriptors.
+        val wrapperStringReplacements = mapOf(
+            "LIZJ" to "getCountryIso",      // getNetworkCountryIso
+            "LJIIIIZZ" to "getCountryIso",  // getSimCountryIso
+            "LJ" to "getOperator",         // getNetworkOperator
+            "LJIIJ" to "getOperator",       // getSimOperator
+            "LJI" to "getOperatorName",    // getNetworkOperatorName
+            "LJIIL" to "getOperatorName",  // getSimOperatorName
+        )
+
         classDefForEach { classDef ->
             if (classDef.type != TELEPHONY_WRAPPER) return@classDefForEach
             for (method in classDef.methods) {
-                if (method.returnType != "Ljava/lang/String;") continue
+                val replacement = wrapperStringReplacements[method.name] ?: continue
+                if (method.returnType != "Ljava/lang/String;" || method.parameterTypes.isNotEmpty()) continue
                 val implementation = method.implementation ?: continue
                 val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
 
@@ -86,7 +99,7 @@ val simSpoofPatch = bytecodePatch(
                 returnIndices.asReversed().forEach { index ->
                     val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
                     mutableMethod.addInstructions(index, """
-                        invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->getCountryIso(Ljava/lang/String;)Ljava/lang/String;
+                        invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;
                         move-result-object v$returnReg
                     """)
                 }
