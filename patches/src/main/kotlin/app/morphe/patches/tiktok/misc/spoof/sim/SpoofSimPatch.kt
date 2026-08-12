@@ -22,13 +22,13 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 private const val EXTENSION_CLASS_DESCRIPTOR = "Lapp/morphe/extension/tiktok/spoof/sim/SpoofSimPatch;"
 private const val TELEPHONY = "Landroid/telephony/TelephonyManager;"
-private const val LOCALE = "Ljava/util/Locale;"
-private const val TIME_ZONE = "Ljava/util/TimeZone;"
+private const val REGION_RESOLVER = "LX/C35590hVz;"
+private const val TELEPHONY_WRAPPER = "LX/C34171AbR;"
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Spoofs SIM country/operator, locale, and timezone signals for TikTok 46.2.3.",
+    description = "Spoofs TikTok 46.2.3 region identity via C35590hVz.LIZ(), C34171AbR BPEA wrapper, and Android TelephonyManager.",
     default = true,
 ) {
     dependsOn(
@@ -39,6 +39,74 @@ val simSpoofPatch = bytecodePatch(
     compatibleWith(*AppCompatibilities.tiktok4623())
 
     execute {
+        // ── Layer A: Region resolver C35590hVz.LIZ() ──
+        // This method reads fake_region > carrier_region > sys_region > app_language
+        // and returns the effective 2-letter region code. Hook every return path.
+        classDefForEach { classDef ->
+            if (classDef.type != REGION_RESOLVER) return@classDefForEach
+            for (method in classDef.methods) {
+                if (method.name != "LIZ" ||
+                    method.returnType != "Ljava/lang/String;" ||
+                    method.parameterTypes.isNotEmpty()
+                ) continue
+                val implementation = method.implementation ?: continue
+                val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
+
+                val returnIndices = mutableListOf<Int>()
+                implementation.instructions.forEachIndexed { index, instruction ->
+                    if (instruction.opcode == Opcode.RETURN_OBJECT) {
+                        returnIndices.add(index)
+                    }
+                }
+
+                returnIndices.asReversed().forEach { index ->
+                    val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
+                    mutableMethod.addInstructions(index, """
+                        invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->getRegion(Ljava/lang/String;)Ljava/lang/String;
+                        move-result-object v$returnReg
+                    """)
+                }
+            }
+        }
+
+        // ── Layer B: TikTok BPEA telephony wrapper C34171AbR ──
+        // Hooks the internal wrapper so region signals stay consistent
+        // even when TikTok reads telephony through its own abstraction.
+        val wrapperMap = mapOf(
+            "LIZJ" to "getCountryIso",      // getNetworkCountryIso
+            "LJIIIIZZ" to "getCountryIso",   // getSimCountryIso
+            "LJ" to "getOperator",           // getNetworkOperator
+            "LJIIJ" to "getOperator",        // getSimOperator
+            "LJI" to "getOperatorName",      // getNetworkOperatorName
+            "LJIIL" to "getOperatorName",    // getSimOperatorName
+        )
+
+        classDefForEach { classDef ->
+            if (classDef.type != TELEPHONY_WRAPPER) return@classDefForEach
+            for (method in classDef.methods) {
+                val replacement = wrapperMap[method.name] ?: continue
+                if (method.returnType != "Ljava/lang/String;") continue
+                val implementation = method.implementation ?: continue
+                val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
+
+                val returnIndices = mutableListOf<Int>()
+                implementation.instructions.forEachIndexed { index, instruction ->
+                    if (instruction.opcode == Opcode.RETURN_OBJECT) {
+                        returnIndices.add(index)
+                    }
+                }
+
+                returnIndices.asReversed().forEach { index ->
+                    val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
+                    mutableMethod.addInstructions(index, """
+                        invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;
+                        move-result-object v$returnReg
+                    """)
+                }
+            }
+        }
+
+        // ── Layer C: Android TelephonyManager (fallback) ──
         val stringReplacements = mapOf(
             "getSimCountryIso" to "getCountryIso",
             "getNetworkCountryIso" to "getCountryIso",
@@ -52,8 +120,6 @@ val simSpoofPatch = bytecodePatch(
         val patchesByMethod = linkedMapOf<Method, ArrayDeque<Pair<Int, String>>>()
         val carrierNamePatches = linkedMapOf<Method, ArrayDeque<Int>>()
         val carrierIdPatches = linkedMapOf<Method, ArrayDeque<Int>>()
-        val localePatches = linkedMapOf<Method, ArrayDeque<Int>>()
-        val timezonePatches = linkedMapOf<Method, ArrayDeque<Int>>()
 
         classDefForEach { classDef ->
             for (method in classDef.methods) {
@@ -68,41 +134,27 @@ val simSpoofPatch = bytecodePatch(
 
                     val methodReference = (instruction as ReferenceInstruction).reference as MethodReference
 
-                    if (methodReference.definingClass == TELEPHONY) {
-                        if (stringReplacements.containsKey(methodReference.name) &&
-                            methodReference.returnType == "Ljava/lang/String;"
-                        ) {
-                            patchesByMethod.getOrPut(method) { ArrayDeque() }
-                                .add(index to stringReplacements.getValue(methodReference.name))
-                        }
+                    if (methodReference.definingClass != TELEPHONY) return@forEachIndexed
 
-                        if ((methodReference.name == "getSimCarrierIdName" ||
-                                methodReference.name == "getSimSpecificCarrierIdName") &&
-                            methodReference.returnType == "Ljava/lang/CharSequence;"
-                        ) {
-                            carrierNamePatches.getOrPut(method) { ArrayDeque() }.add(index)
-                        }
-
-                        if ((methodReference.name == "getSimCarrierId" ||
-                                methodReference.name == "getSimSpecificCarrierId") &&
-                            methodReference.returnType == "I"
-                        ) {
-                            carrierIdPatches.getOrPut(method) { ArrayDeque() }.add(index)
-                        }
+                    if (stringReplacements.containsKey(methodReference.name) &&
+                        methodReference.returnType == "Ljava/lang/String;"
+                    ) {
+                        patchesByMethod.getOrPut(method) { ArrayDeque() }
+                            .add(index to stringReplacements.getValue(methodReference.name))
                     }
 
-                    if (methodReference.definingClass == LOCALE &&
-                        methodReference.name == "getDefault" &&
-                        methodReference.returnType == LOCALE
+                    if ((methodReference.name == "getSimCarrierIdName" ||
+                            methodReference.name == "getSimSpecificCarrierIdName") &&
+                        methodReference.returnType == "Ljava/lang/CharSequence;"
                     ) {
-                        localePatches.getOrPut(method) { ArrayDeque() }.add(index)
+                        carrierNamePatches.getOrPut(method) { ArrayDeque() }.add(index)
                     }
 
-                    if (methodReference.definingClass == TIME_ZONE &&
-                        methodReference.name == "getDefault" &&
-                        methodReference.returnType == TIME_ZONE
+                    if ((methodReference.name == "getSimCarrierId" ||
+                            methodReference.name == "getSimSpecificCarrierId") &&
+                        methodReference.returnType == "I"
                     ) {
-                        timezonePatches.getOrPut(method) { ArrayDeque() }.add(index)
+                        carrierIdPatches.getOrPut(method) { ArrayDeque() }.add(index)
                     }
                 }
             }
@@ -146,34 +198,6 @@ val simSpoofPatch = bytecodePatch(
                 mutableMethod.addInstructions(index + 2, """
                     invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getCarrierId(I)I;
                     move-result v$resultRegister
-                """)
-            }
-        }
-
-        localePatches.forEach { (method, patches) ->
-            val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
-            while (patches.isNotEmpty()) {
-                val index = patches.removeLast()
-                val nextInstr = mutableMethod.getInstruction(index + 1)
-                if (nextInstr !is OneRegisterInstruction) continue
-                val resultRegister = nextInstr.registerA
-                mutableMethod.addInstructions(index + 2, """
-                    invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getDefaultLocale(Ljava/util/Locale;)Ljava/util/Locale;
-                    move-result-object v$resultRegister
-                """)
-            }
-        }
-
-        timezonePatches.forEach { (method, patches) ->
-            val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
-            while (patches.isNotEmpty()) {
-                val index = patches.removeLast()
-                val nextInstr = mutableMethod.getInstruction(index + 1)
-                if (nextInstr !is OneRegisterInstruction) continue
-                val resultRegister = nextInstr.registerA
-                mutableMethod.addInstructions(index + 2, """
-                    invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getDefaultTimeZone(Ljava/util/TimeZone;)Ljava/util/TimeZone;
-                    move-result-object v$resultRegister
                 """)
             }
         }
