@@ -32,10 +32,14 @@ private const val TIME_ZONE = "Ljava/util/TimeZone;"
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Jaggu-style region spoof for TikTok 46.2.3: internal region gate, persisted region, region config, locale, timezone, BPEA and TelephonyManager.",
+    description = "Jaggu region-gate port for TikTok 46.2.3: force the verified internal isInTikTokRegion gate and mirror Jaggu's telephony/region layer.",
     default = true,
 ) {
-    dependsOn(sharedExtensionPatch, settingsPatch)
+    dependsOn(
+        sharedExtensionPatch,
+        settingsPatch,
+    )
+
     compatibleWith(*AppCompatibilities.tiktok4623())
 
     execute {
@@ -43,30 +47,22 @@ val simSpoofPatch = bytecodePatch(
             if (classDef.type != PERSISTED_REGION) return@classDefForEach
             for (method in classDef.methods) {
                 if (method.name != "LIZIZ" || method.returnType != "V" || method.parameterTypes.size != 3 ||
-                    method.parameterTypes[0] != "Landroid/content/Context;" || method.parameterTypes[1] != "Ljava/lang/String;" || method.parameterTypes[2] != LOCALE) continue
-                mutableClassDefBy(classDef.type).findMutableMethodOf(method).addInstructions(0, """
-                    invoke-static {p2}, $EXTENSION_CLASS_DESCRIPTOR->getLocale(Ljava/util/Locale;)Ljava/util/Locale;
-                    move-result-object p2
-                """)
+                    method.parameterTypes[0] != "Landroid/content/Context;" ||
+                    method.parameterTypes[1] != "Ljava/lang/String;" || method.parameterTypes[2] != LOCALE) continue
+                val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
+                mutableMethod.addInstructions(0, "invoke-static {p2}, $EXTENSION_CLASS_DESCRIPTOR->getLocale(Ljava/util/Locale;)Ljava/util/Locale;\nmove-result-object p2")
             }
         }
 
-        // Hook the verified 46.2.3 internal region gate. Use a literal smali
-        // method invocation here; the previous malformed form was the lexer
-        // failure reported by Morphe.
         classDefForEach { classDef ->
             if (classDef.type != INTERNAL_REGION_SERVICE) return@classDefForEach
             for (method in classDef.methods) {
                 if (method.name != "isInTikTokRegion" || method.returnType != "Z" || method.parameterTypes.isNotEmpty()) continue
                 val implementation = method.implementation ?: continue
                 val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
-                val returnIndices = mutableListOf<Int>()
-                implementation.instructions.forEachIndexed { index, instruction ->
-                    if (instruction.opcode == Opcode.RETURN) returnIndices.add(index)
-                }
-                returnIndices.asReversed().forEach { index ->
-                    val returnReg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
-                    mutableMethod.addInstructions(index, "invoke-static {}, $EXTENSION_CLASS_DESCRIPTOR->isInTikTokRegion()Z\nmove-result v$returnReg")
+                implementation.instructions.mapIndexedNotNull { i, ins -> if (ins.opcode == Opcode.RETURN) i else null }.asReversed().forEach { index ->
+                    val reg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
+                    mutableMethod.addInstructions(index, "invoke-static {}, $EXTENSION_CLASS_DESCRIPTOR->isInTikTokRegion()Z\nmove-result v$reg")
                 }
             }
         }
@@ -79,10 +75,7 @@ val simSpoofPatch = bytecodePatch(
                 val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
                 implementation.instructions.mapIndexedNotNull { i, ins -> if (ins.opcode == Opcode.RETURN_OBJECT) i else null }.asReversed().forEach { index ->
                     val reg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
-                    mutableMethod.addInstructions(index, """
-                        invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->getRegion(Ljava/lang/String;)Ljava/lang/String;
-                        move-result-object v$reg
-                    """)
+                    mutableMethod.addInstructions(index, "invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->getRegion(Ljava/lang/String;)Ljava/lang/String;\nmove-result-object v$reg")
                 }
             }
         }
@@ -95,10 +88,7 @@ val simSpoofPatch = bytecodePatch(
                 val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
                 implementation.instructions.mapIndexedNotNull { i, ins -> if (ins.opcode == Opcode.RETURN_OBJECT) i else null }.asReversed().forEach { index ->
                     val reg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
-                    mutableMethod.addInstructions(index, """
-                        invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->spoofRegionMap(Ljava/util/Map;)Ljava/util/Map;
-                        move-result-object v$reg
-                    """)
+                    mutableMethod.addInstructions(index, "invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->spoofRegionMap(Ljava/util/Map;)Ljava/util/Map;\nmove-result-object v$reg")
                 }
             }
         }
@@ -113,21 +103,20 @@ val simSpoofPatch = bytecodePatch(
                 val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
                 implementation.instructions.mapIndexedNotNull { i, ins -> if (ins.opcode == Opcode.RETURN_OBJECT) i else null }.asReversed().forEach { index ->
                     val reg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
-                    mutableMethod.addInstructions(index, """
-                        invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;
-                        move-result-object v$reg
-                    """)
+                    mutableMethod.addInstructions(index, "invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;\nmove-result-object v$reg")
                 }
             }
         }
 
-        val stringReplacements = mapOf("getSimCountryIso" to "getCountryIso", "getNetworkCountryIso" to "getCountryIso", "getSimCountryIsoForPhone" to "getCountryIso", "getNetworkCountryIsoForPhone" to "getCountryIso", "getSimOperator" to "getOperator", "getNetworkOperator" to "getOperator", "getNetworkOperatorForPhone" to "getOperator", "getSimOperatorName" to "getOperatorName", "getNetworkOperatorName" to "getOperatorName", "getNetworkOperatorNameForPhone" to "getOperatorName", "getSimOperatorNumeric" to "getOperator", "getNetworkOperatorNumeric" to "getOperator")
+        val stringReplacements = mapOf(
+            "getSimCountryIso" to "getCountryIso", "getNetworkCountryIso" to "getCountryIso", "getSimCountryIsoForPhone" to "getCountryIso", "getNetworkCountryIsoForPhone" to "getCountryIso",
+            "getSimOperator" to "getOperator", "getNetworkOperator" to "getOperator", "getNetworkOperatorForPhone" to "getOperator", "getSimOperatorName" to "getOperatorName", "getNetworkOperatorName" to "getOperatorName", "getNetworkOperatorNameForPhone" to "getOperatorName", "getSimOperatorNumeric" to "getOperator", "getNetworkOperatorNumeric" to "getOperator"
+        )
         val patchesByMethod = linkedMapOf<Method, ArrayDeque<Pair<Int, String>>>()
         val carrierNamePatches = linkedMapOf<Method, ArrayDeque<Int>>()
         val carrierIdPatches = linkedMapOf<Method, ArrayDeque<Int>>()
         val localePatches = linkedMapOf<Method, ArrayDeque<Int>>()
         val timezonePatches = linkedMapOf<Method, ArrayDeque<Int>>()
-
         classDefForEach { classDef ->
             for (method in classDef.methods) {
                 val implementation = method.implementation ?: continue
@@ -144,70 +133,52 @@ val simSpoofPatch = bytecodePatch(
                 }
             }
         }
-
         patchesByMethod.forEach { (method, patches) ->
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val (index, replacement) = patches.removeLast()
                 val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
                 if (nextInstr !is OneRegisterInstruction) continue
-                val reg = nextInstr.registerA
-                mutableMethod.addInstructions(index + 2, """
-                    invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;
-                    move-result-object v$reg
-                """)
+                val resultRegister = nextInstr.registerA
+                mutableMethod.addInstructions(index + 2, "invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;\nmove-result-object v$resultRegister")
             }
         }
-
         carrierNamePatches.forEach { (method, patches) ->
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
-                val index = patches.removeLast(); val next = mutableMethod.implementation!!.instructions[index + 1]
-                if (next !is OneRegisterInstruction) continue
-                val reg = next.registerA
-                mutableMethod.addInstructions(index + 2, """
-                    invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->getCarrierIdName(Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
-                    move-result-object v$reg
-                """)
+                val index = patches.removeLast(); val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
+                if (nextInstr !is OneRegisterInstruction) continue
+                val reg = nextInstr.registerA
+                mutableMethod.addInstructions(index + 2, "invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->getCarrierIdName(Ljava/lang/CharSequence;)Ljava/lang/CharSequence;\nmove-result-object v$reg")
             }
         }
-
         carrierIdPatches.forEach { (method, patches) ->
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
-                val index = patches.removeLast(); val next = mutableMethod.implementation!!.instructions[index + 1]
-                if (next !is OneRegisterInstruction) continue
-                val reg = next.registerA
+                val index = patches.removeLast(); val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
+                if (nextInstr !is OneRegisterInstruction) continue
+                val reg = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, "invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->getCarrierId(I)I\nmove-result v$reg")
             }
         }
-
         localePatches.forEach { (method, patches) ->
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
-                val index = patches.removeLast(); val next = mutableMethod.implementation!!.instructions[index + 1]
-                if (next !is OneRegisterInstruction) continue
-                val reg = next.registerA
-                mutableMethod.addInstructions(index + 2, """
-                    invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->getLocale(Ljava/util/Locale;)Ljava/util/Locale;
-                    move-result-object v$reg
-                """)
+                val index = patches.removeLast(); val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
+                if (nextInstr !is OneRegisterInstruction) continue
+                val reg = nextInstr.registerA
+                mutableMethod.addInstructions(index + 2, "invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->getLocale(Ljava/util/Locale;)Ljava/util/Locale;\nmove-result-object v$reg")
             }
         }
-
         timezonePatches.forEach { (method, patches) ->
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
-                val index = patches.removeLast(); val next = mutableMethod.implementation!!.instructions[index + 1]
-                if (next !is OneRegisterInstruction) continue
-                val reg = next.registerA
-                mutableMethod.addInstructions(index + 2, """
-                    invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->getTimeZone(Ljava/util/TimeZone;)Ljava/util/TimeZone;
-                    move-result-object v$reg
-                """)
+                val index = patches.removeLast(); val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
+                if (nextInstr !is OneRegisterInstruction) continue
+                val reg = nextInstr.registerA
+                mutableMethod.addInstructions(index + 2, "invoke-static {v$reg}, $EXTENSION_CLASS_DESCRIPTOR->getTimeZone(Ljava/util/TimeZone;)Ljava/util/TimeZone;\nmove-result-object v$reg")
             }
         }
-
         SettingsStatusLoadFingerprint.method.addInstruction(0, "invoke-static {}, Lapp/morphe/extension/tiktok/settings/SettingsStatus;->enableSimSpoof()V")
     }
 }
