@@ -1,3 +1,16 @@
+## [1.6.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.2...v1.6.3) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** avoid lexer failure in Jaggu region gate ([dca4ffb](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/dca4ffb21a8fbb0cf578192c448acbe7cfe9390d))
+
+
+
+
+
+## 1.6.3
+
 ## [1.6.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.1...v1.6.2) (2026-08-13)
 
 
