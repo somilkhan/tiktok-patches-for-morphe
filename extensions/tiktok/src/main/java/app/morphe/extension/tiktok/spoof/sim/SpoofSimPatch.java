@@ -2,45 +2,37 @@
  * Forked from:
  * https://gitlab.com/ReVanced/revanced-patches/-/blob/main/extensions/tiktok/src/main/java/app/revanced/extension/tiktok/spoof/sim/SpoofSimPatch.java
  */
-
 package app.morphe.extension.tiktok.spoof.sim;
 
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.tiktok.settings.Settings;
 import app.morphe.extension.tiktok.settings.SettingsStatus;
-
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 @SuppressWarnings("unused")
 public class SpoofSimPatch {
     private static boolean enabled() {
-        return SettingsStatus.simSpoofEnabled ||
-                (Utils.getContext() != null && Settings.SIM_SPOOF.get());
+        return SettingsStatus.simSpoofEnabled || (Utils.getContext() != null && Settings.SIM_SPOOF.get());
     }
-
     private static String iso() {
         String value = Settings.SIM_SPOOF_ISO.get();
         return value == null || value.isEmpty() ? "US" : value.toUpperCase(Locale.US);
     }
-
     public static boolean isInTikTokRegion() { return enabled(); }
     public static boolean isInTikTokRegion(boolean value) { return enabled() ? true : value; }
     public static boolean isUS(boolean value) { return enabled() ? "US".equals(iso()) : value; }
-
     public static boolean isUK(boolean value) {
         if (!enabled()) return value;
         String region = iso();
         return "GB".equals(region) || "UK".equals(region);
     }
-
     public static String getRegion(String value) { return enabled() ? iso() : value; }
-
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static Map spoofRegionMap(Map value) {
         if (!enabled() || value == null) return value;
-        final String region = iso();
+        String region = iso();
         value.put("fake_region", region);
         value.put("carrier_region", region);
         value.put("region", region);
@@ -49,28 +41,29 @@ public class SpoofSimPatch {
         value.put("current_region", region);
         return value;
     }
-
     public static String getCountryIso(String value) { return enabled() ? iso() : value; }
-
     public static String getOperator(String value) {
         if (!enabled()) return value;
         String result = Settings.SIMSPOOF_MCCMNC.get();
         return result == null || result.isEmpty() ? value : result;
     }
-
     public static String getOperatorName(String value) {
         if (!enabled()) return value;
         String result = Settings.SIMSPOOF_OP_NAME.get();
         return result == null || result.isEmpty() ? value : result;
     }
-
     public static CharSequence getCarrierIdName(CharSequence value) {
         if (!enabled()) return value;
         String operator = Settings.SIMSPOOF_OP_NAME.get();
         return operator == null || operator.isEmpty() ? value : operator;
     }
-
     public static int getCarrierId(int value) { return value; }
     public static Locale getLocale(Locale value) { return enabled() ? Locale.US : value; }
     public static TimeZone getTimeZone(TimeZone value) { return enabled() ? TimeZone.getTimeZone("America/New_York") : value; }
+
+    // Jaggu-compatible network-source boundary: do not alter normal DNS resolution.
+    // The actual network bypass is implemented by TikTok's native networking layer;
+    // these methods provide safe extension boundaries for verified 46.2.3 call sites.
+    public static String fixNetworkHost(String value) { return value; }
+    public static String fixNetworkDns(String value) { return value; }
 }
