@@ -25,14 +25,13 @@ private const val REGION_RESOLVER = "LX/C35590hVz;"
 private const val REGION_CONFIG_PROVIDER = "LX/C379311yQ;"
 private const val TELEPHONY_WRAPPER = "LX/C34171AbR;"
 private const val PERSISTED_REGION = "LX/C215817xU;"
-private const val INTERNAL_REGION_SERVICE = "Lcom/ss/android/ugc/aweme/ecommerce/dependency/location/LocationDependencyService;"
 private const val LOCALE = "Ljava/util/Locale;"
 private const val TIME_ZONE = "Ljava/util/TimeZone;"
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Surgical Jaggu-style region spoof for TikTok 46.2.3: internal region gate, persisted region, region config, locale, timezone, BPEA and TelephonyManager.",
+    description = "Surgical Jaggu-style region spoof for TikTok 46.2.3: persisted region, region config, locale, timezone, BPEA and TelephonyManager.",
     default = true,
 ) {
     dependsOn(
@@ -43,33 +42,6 @@ val simSpoofPatch = bytecodePatch(
     compatibleWith(*AppCompatibilities.tiktok4623())
 
     execute {
-        // Verified 46.2.3 gate: LocationDependencyService.isInTikTokRegion()
-        // delegates to the internal region service and directly controls whether
-        // TikTok considers the current region supported. Jaggu's working 36.7.4
-        // build contains the same-style isInTikTokRegion gate override.
-        classDefForEach { classDef ->
-            if (classDef.type != INTERNAL_REGION_SERVICE) return@classDefForEach
-            for (method in classDef.methods) {
-                if (method.name != "isInTikTokRegion" ||
-                    method.returnType != "Z" ||
-                    method.parameterTypes.isNotEmpty()
-                ) continue
-                val implementation = method.implementation ?: continue
-                val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
-                val returnIndices = mutableListOf<Int>()
-                implementation.instructions.forEachIndexed { index, instruction ->
-                    if (instruction.opcode == Opcode.RETURN) returnIndices.add(index)
-                }
-                returnIndices.asReversed().forEach { index ->
-                    val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
-                    mutableMethod.addInstructions(index, """
-                        invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->isInTikTokRegion(Z)Z;
-                        move-result v$returnReg
-                    """)
-                }
-            }
-        }
-
         // C215817xU.LIZIZ(Context, String, Locale) persists key_current_region.
         // Force the Locale argument itself so TikTok cannot persist the device's
         // original region before the later resolver/config hooks run.
