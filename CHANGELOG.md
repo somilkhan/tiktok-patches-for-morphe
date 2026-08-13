@@ -1,3 +1,16 @@
+## [1.8.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.2...v1.8.3) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** recover Jaggu network telephony null hooks ([b0445ba](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/b0445babf62f3df436cb335cf6cc2f7a04596685))
+
+
+
+
+
+## 1.8.3
+
 ## [1.8.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.1...v1.8.2) (2026-08-13)
 
 

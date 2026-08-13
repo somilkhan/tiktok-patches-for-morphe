@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-08-13T22:24:25",
-  "description": "## [1.8.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.1...v1.8.2) (2026-08-13)\n\n\n### Bug Fixes\n\n* **spoof:** hook recovered Jaggu networkSpecifier behavior ([71827ac](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/71827ac9b60446e96d2e4da76e4c79bae350017f))\n* **spoof:** recover Jaggu getNetworkSpecifier hook ([594f6ee](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/594f6ee80c443bcd1f600eb4fec58f50387855f8))\n\n\n\n\n\n## 1.8.2",
-  "download_url": "https://github.com/somilkhan/tiktok-patches-for-morphe/releases/download/v1.8.2/patches-1.8.2.mpp",
+  "created_at": "2026-08-13T22:26:58",
+  "description": "## [1.8.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.2...v1.8.3) (2026-08-13)\n\n\n### Bug Fixes\n\n* **spoof:** recover Jaggu network telephony null hooks ([b0445ba](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/b0445babf62f3df436cb335cf6cc2f7a04596685))\n\n\n\n\n\n## 1.8.3",
+  "download_url": "https://github.com/somilkhan/tiktok-patches-for-morphe/releases/download/v1.8.3/patches-1.8.3.mpp",
   "signature_download_url": "",
-  "version": "1.8.2"
+  "version": "1.8.3"
 }
