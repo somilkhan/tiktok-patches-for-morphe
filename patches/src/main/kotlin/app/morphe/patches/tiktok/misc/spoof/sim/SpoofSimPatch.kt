@@ -23,12 +23,13 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 private const val EXTENSION_CLASS_DESCRIPTOR = "Lapp/morphe/extension/tiktok/spoof/sim/SpoofSimPatch;"
 private const val TELEPHONY = "Landroid/telephony/TelephonyManager;"
 private const val REGION_RESOLVER = "LX/C35590hVz;"
+private const val REGION_CONFIG_PROVIDER = "LX/C379311yQ;"
 private const val TELEPHONY_WRAPPER = "LX/C34171AbR;"
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Surgical Jaggu-style region spoof for TikTok 46.2.3: C35590hVz.LIZ, C34171AbR, TelephonyManager.",
+    description = "Surgical Jaggu-style region spoof for TikTok 46.2.3: global region map, C35590hVz, C34171AbR, TelephonyManager.",
     default = true,
 ) {
     dependsOn(
@@ -40,7 +41,6 @@ val simSpoofPatch = bytecodePatch(
 
     execute {
         // ── Layer A: Region resolver C35590hVz.LIZ() ──
-        // Reads fake_region > carrier_region > sys_region > app_language → uppercase
         classDefForEach { classDef ->
             if (classDef.type != REGION_RESOLVER) return@classDefForEach
             for (method in classDef.methods) {
@@ -68,17 +68,42 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
+        // ── Layer A2: global region/config map C379311yQ ──
+        // This class materializes the map containing fake_region, carrier_region,
+        // region and op_region. Patch the map at its boundary so the boot/config
+        // request sees the spoofed region before later resolvers run.
+        classDefForEach { classDef ->
+            if (classDef.type != REGION_CONFIG_PROVIDER) return@classDefForEach
+            for (method in classDef.methods) {
+                if (method.returnType != "Ljava/util/Map;" || method.parameterTypes.isNotEmpty()) continue
+                val implementation = method.implementation ?: continue
+                val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
+
+                val returnIndices = mutableListOf<Int>()
+                implementation.instructions.forEachIndexed { index, instruction ->
+                    if (instruction.opcode == Opcode.RETURN_OBJECT) {
+                        returnIndices.add(index)
+                    }
+                }
+
+                returnIndices.asReversed().forEach { index ->
+                    val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
+                    mutableMethod.addInstructions(index, """
+                        invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->spoofRegionMap(Ljava/util/Map;)Ljava/util/Map;
+                        move-result-object v$returnReg
+                    """)
+                }
+            }
+        }
+
         // ── Layer B: BPEA telephony wrapper C34171AbR — exact verified methods ──
-        // Do NOT rewrite every String-returning method in this wrapper. The wrapper
-        // contains distinct country/operator/operator-name signals, so preserve the
-        // semantic mapping used by its TelephonyManager descriptors.
         val wrapperStringReplacements = mapOf(
-            "LIZJ" to "getCountryIso",      // getNetworkCountryIso
-            "LJIIIIZZ" to "getCountryIso",  // getSimCountryIso
-            "LJ" to "getOperator",         // getNetworkOperator
-            "LJIIJ" to "getOperator",       // getSimOperator
-            "LJI" to "getOperatorName",    // getNetworkOperatorName
-            "LJIIL" to "getOperatorName",  // getSimOperatorName
+            "LIZJ" to "getCountryIso",
+            "LJIIIIZZ" to "getCountryIso",
+            "LJ" to "getOperator",
+            "LJIIJ" to "getOperator",
+            "LJI" to "getOperatorName",
+            "LJIIL" to "getOperatorName",
         )
 
         classDefForEach { classDef ->
@@ -106,7 +131,7 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // ── Layer C: Android TelephonyManager ──
+        // ── Layer C: Android TelephonyManager fallback ──
         val stringReplacements = mapOf(
             "getSimCountryIso" to "getCountryIso",
             "getNetworkCountryIso" to "getCountryIso",
@@ -138,7 +163,6 @@ val simSpoofPatch = bytecodePatch(
                     }
 
                     val methodReference = (instruction as ReferenceInstruction).reference as MethodReference
-
                     if (methodReference.definingClass != TELEPHONY) return@forEachIndexed
 
                     if (stringReplacements.containsKey(methodReference.name) &&
