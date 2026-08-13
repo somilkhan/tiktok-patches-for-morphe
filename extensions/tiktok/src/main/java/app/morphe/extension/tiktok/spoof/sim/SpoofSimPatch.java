@@ -61,9 +61,9 @@ public class SpoofSimPatch {
     public static Locale getLocale(Locale value) { return enabled() ? Locale.US : value; }
     public static TimeZone getTimeZone(TimeZone value) { return enabled() ? TimeZone.getTimeZone("America/New_York") : value; }
 
-    // Jaggu-compatible network-source boundary: do not alter normal DNS resolution.
-    // The actual network bypass is implemented by TikTok's native networking layer;
-    // these methods provide safe extension boundaries for verified 46.2.3 call sites.
+    // Network boundary used by the verified 46.2.3 resolver hooks.
+    // Keep resolver inputs intact; the patch layer decides which internal
+    // resolver results are replaced. Never install a global DoH resolver here.
     public static String fixNetworkHost(String value) { return value; }
     public static String fixNetworkDns(String value) { return value; }
 }
