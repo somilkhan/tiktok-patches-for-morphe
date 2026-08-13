@@ -49,9 +49,15 @@ public class SpoofSimPatch {
     }
     public static int getCarrierId(int value) { return value; }
 
-    // Exact behavior recovered from Jaggu's exported native hook:
-    // Java_android_telephony_TelephonyManager_getNetworkSpecifier__ -> null.
+    // Step 1: exact Jaggu native getNetworkSpecifier behavior.
     public static String getNetworkSpecifier(String value) { return enabled() ? null : value; }
+
+    // Step 2: exact Jaggu native network-telephony behavior recovered from libiam.so.
+    // The exported native hooks for these methods call the original JNI entry and then
+    // force the result register to null. Keep SIM-side values spoofed separately.
+    public static String getNetworkCountryIso(String value) { return enabled() ? null : value; }
+    public static String getNetworkOperator(String value) { return enabled() ? null : value; }
+    public static String getNetworkOperatorName(String value) { return enabled() ? null : value; }
 
     public static Locale getLocale(Locale value) { return enabled() ? Locale.US : value; }
     public static TimeZone getTimeZone(TimeZone value) { return enabled() ? TimeZone.getTimeZone("America/New_York") : value; }
