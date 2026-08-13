@@ -8,6 +8,7 @@ package app.morphe.extension.tiktok.spoof.sim;
 import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.tiktok.settings.Settings;
+import app.morphe.extension.tiktok.settings.SettingsStatus;
 
 import java.util.Map;
 import java.util.Locale;
@@ -21,14 +22,15 @@ public class SpoofSimPatch {
         return true;
     }
 
+    // The patch enables simSpoofEnabled during TikTok settings initialization.
+    // Treat that status flag as authoritative, matching the always-active Jaggu
+    // region layer, while still allowing the explicit Morphe setting to enable it.
     private static boolean enabled() {
-        return Utils.getContext() != null && Settings.SIM_SPOOF.get();
+        return Utils.getContext() != null && (Settings.SIM_SPOOF.get() || SettingsStatus.simSpoofEnabled);
     }
 
-    /** Force TikTok's internal region gate to report that the current region is supported. */
     public static boolean isInTikTokRegion(boolean value) {
-        if (!enabled()) return value;
-        return true;
+        return enabled() ? true : value;
     }
 
     public static String getRegion(String value) {
@@ -37,7 +39,7 @@ public class SpoofSimPatch {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static Map spoofRegionMap(Map value) {
-        if (value == null) return value;
+        if (!enabled() || value == null) return value;
 
         String iso = Settings.SIM_SPOOF_ISO.get();
         if (iso == null || iso.isEmpty()) return value;
@@ -56,7 +58,7 @@ public class SpoofSimPatch {
 
     public static String getCountryIso(String value) {
         if (isContextNotSet("countryIso")) return value;
-        if (Settings.SIM_SPOOF.get()) {
+        if (enabled()) {
             String iso = Settings.SIM_SPOOF_ISO.get();
             Logger.printDebug(() -> "Spoofing countryIso from: " + value + " to: " + iso);
             return iso;
@@ -66,7 +68,7 @@ public class SpoofSimPatch {
 
     public static String getOperator(String value) {
         if (isContextNotSet("MCC-MNC")) return value;
-        if (Settings.SIM_SPOOF.get()) {
+        if (enabled()) {
             String mccMnc = Settings.SIMSPOOF_MCCMNC.get();
             Logger.printDebug(() -> "Spoofing sim MCC-MNC from: " + value + " to: " + mccMnc);
             return mccMnc;
@@ -76,7 +78,7 @@ public class SpoofSimPatch {
 
     public static String getOperatorName(String value) {
         if (isContextNotSet("operatorName")) return value;
-        if (Settings.SIM_SPOOF.get()) {
+        if (enabled()) {
             String operator = Settings.SIMSPOOF_OP_NAME.get();
             Logger.printDebug(() -> "Spoofing sim operatorName from: " + value + " to: " + operator);
             return operator;
@@ -94,13 +96,11 @@ public class SpoofSimPatch {
         return value;
     }
 
-    /** Replace Locale.getDefault() result with a US locale when SIM spoof is enabled. */
     public static Locale getLocale(Locale value) {
         if (!enabled()) return value;
         return Locale.US;
     }
 
-    /** Replace TimeZone.getDefault() result with a US timezone when SIM spoof is enabled. */
     public static TimeZone getTimeZone(TimeZone value) {
         if (!enabled()) return value;
         return TimeZone.getTimeZone("America/New_York");
