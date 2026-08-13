@@ -10,8 +10,10 @@ import app.morphe.patches.tiktok.misc.settings.settingsPatch
 import app.morphe.util.findMutableMethodOf
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.Method
+import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 private const val EXT = "Lapp/morphe/extension/tiktok/spoof/sim/SpoofSimPatch;"
@@ -25,6 +27,12 @@ private const val REGION_SOURCE = "LX/1C4Y;"
 private const val LOCALE = "Ljava/util/Locale;"
 private const val TIME_ZONE = "Ljava/util/TimeZone;"
 private const val INET_ADDRESS = "Ljava/net/InetAddress;"
+
+private fun singleInvokeArgumentRegister(instruction: ReferenceInstruction): Int? = when (instruction) {
+    is FiveRegisterInstruction -> instruction.registerC
+    is RegisterRangeInstruction -> instruction.startRegister
+    else -> null
+}
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
@@ -128,14 +136,15 @@ val simSpoofPatch = bytecodePatch(
         val carrierIds = linkedMapOf<Method, ArrayDeque<Int>>()
         val locales = linkedMapOf<Method, ArrayDeque<Int>>()
         val timezones = linkedMapOf<Method, ArrayDeque<Int>>()
-        val dnsAll = linkedMapOf<Method, ArrayDeque<Int>>()
-        val dnsOne = linkedMapOf<Method, ArrayDeque<Int>>()
+        val dnsAll = linkedMapOf<Method, ArrayDeque<Pair<Int, Int>>>()
+        val dnsOne = linkedMapOf<Method, ArrayDeque<Pair<Int, Int>>>()
 
         classDefForEach { classDef ->
             classDef.methods.forEach { method ->
                 method.implementation?.instructions?.forEachIndexed { index, instruction ->
                     if (instruction.opcode != Opcode.INVOKE_VIRTUAL && instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE && instruction.opcode != Opcode.INVOKE_STATIC) return@forEachIndexed
-                    val ref = (instruction as ReferenceInstruction).reference as MethodReference
+                    val referenceInstruction = instruction as? ReferenceInstruction ?: return@forEachIndexed
+                    val ref = referenceInstruction.reference as? MethodReference ?: return@forEachIndexed
                     if (ref.definingClass == TELEPHONY) {
                         if (ref.returnType == "Ljava/lang/String;" && replacements.containsKey(ref.name)) patches.getOrPut(method) { ArrayDeque() }.add(index to replacements.getValue(ref.name))
                         if (ref.returnType == "Ljava/lang/CharSequence;" && (ref.name == "getSimCarrierIdName" || ref.name == "getSimSpecificCarrierIdName")) carrierNames.getOrPut(method) { ArrayDeque() }.add(index)
@@ -143,8 +152,12 @@ val simSpoofPatch = bytecodePatch(
                     }
                     if (ref.definingClass == LOCALE && ref.name == "getDefault" && ref.returnType == LOCALE && ref.parameterTypes.isEmpty()) locales.getOrPut(method) { ArrayDeque() }.add(index)
                     if (ref.definingClass == TIME_ZONE && ref.name == "getDefault" && ref.returnType == TIME_ZONE && ref.parameterTypes.isEmpty()) timezones.getOrPut(method) { ArrayDeque() }.add(index)
-                    if (ref.definingClass == INET_ADDRESS && ref.name == "getAllByName" && ref.returnType == "[Ljava/net/InetAddress;" && ref.parameterTypes.size == 1 && ref.parameterTypes[0] == "Ljava/lang/String;") dnsAll.getOrPut(method) { ArrayDeque() }.add(index)
-                    if (ref.definingClass == INET_ADDRESS && ref.name == "getByName" && ref.returnType == "Ljava/net/InetAddress;" && ref.parameterTypes.size == 1 && ref.parameterTypes[0] == "Ljava/lang/String;") dnsOne.getOrPut(method) { ArrayDeque() }.add(index)
+                    if (ref.definingClass == INET_ADDRESS && ref.name == "getAllByName" && ref.returnType == "[Ljava/net/InetAddress;" && ref.parameterTypes.size == 1 && ref.parameterTypes[0] == "Ljava/lang/String;") {
+                        singleInvokeArgumentRegister(referenceInstruction)?.let { dnsAll.getOrPut(method) { ArrayDeque() }.add(index to it) }
+                    }
+                    if (ref.definingClass == INET_ADDRESS && ref.name == "getByName" && ref.returnType == "Ljava/net/InetAddress;" && ref.parameterTypes.size == 1 && ref.parameterTypes[0] == "Ljava/lang/String;") {
+                        singleInvokeArgumentRegister(referenceInstruction)?.let { dnsOne.getOrPut(method) { ArrayDeque() }.add(index to it) }
+                    }
                 }
             }
         }
@@ -192,21 +205,19 @@ val simSpoofPatch = bytecodePatch(
         dnsAll.forEach { (method, list) ->
             val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (list.isNotEmpty()) {
-                val index = list.removeLast()
+                val (index, hostReg) = list.removeLast()
                 val result = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
                 val resultReg = result.registerA
-                val host = mutable.implementation!!.instructions.getOrNull(index - 1) as? OneRegisterInstruction ?: continue
-                mutable.addInstructions(index + 2, "invoke-static {v${host.registerA}, v$resultReg}, $EXT->resolveAll(Ljava/lang/String;[Ljava/net/InetAddress;)[Ljava/net/InetAddress;\nmove-result-object v$resultReg")
+                mutable.addInstructions(index + 2, "invoke-static {v$hostReg, v$resultReg}, $EXT->resolveAll(Ljava/lang/String;[Ljava/net/InetAddress;)[Ljava/net/InetAddress;\nmove-result-object v$resultReg")
             }
         }
         dnsOne.forEach { (method, list) ->
             val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (list.isNotEmpty()) {
-                val index = list.removeLast()
+                val (index, hostReg) = list.removeLast()
                 val result = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
                 val resultReg = result.registerA
-                val host = mutable.implementation!!.instructions.getOrNull(index - 1) as? OneRegisterInstruction ?: continue
-                mutable.addInstructions(index + 2, "invoke-static {v${host.registerA}, v$resultReg}, $EXT->resolveOne(Ljava/lang/String;Ljava/net/InetAddress;)Ljava/net/InetAddress;\nmove-result-object v$resultReg")
+                mutable.addInstructions(index + 2, "invoke-static {v$hostReg, v$resultReg}, $EXT->resolveOne(Ljava/lang/String;Ljava/net/InetAddress;)Ljava/net/InetAddress;\nmove-result-object v$resultReg")
             }
         }
 
