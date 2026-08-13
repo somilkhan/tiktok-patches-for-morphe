@@ -5,7 +5,6 @@
 
 package app.morphe.extension.tiktok.spoof.sim;
 
-import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.tiktok.settings.Settings;
 import app.morphe.extension.tiktok.settings.SettingsStatus;
@@ -26,17 +25,9 @@ public class SpoofSimPatch {
         return value == null || value.isEmpty() ? "US" : value.toUpperCase(Locale.US);
     }
 
-    public static boolean isInTikTokRegion() {
-        return enabled();
-    }
-
-    public static boolean isInTikTokRegion(boolean value) {
-        return enabled() ? true : value;
-    }
-
-    public static boolean isUS(boolean value) {
-        return enabled() ? "US".equals(iso()) : value;
-    }
+    public static boolean isInTikTokRegion() { return enabled(); }
+    public static boolean isInTikTokRegion(boolean value) { return enabled() ? true : value; }
+    public static boolean isUS(boolean value) { return enabled() ? "US".equals(iso()) : value; }
 
     public static boolean isUK(boolean value) {
         if (!enabled()) return value;
@@ -44,9 +35,7 @@ public class SpoofSimPatch {
         return "GB".equals(region) || "UK".equals(region);
     }
 
-    public static String getRegion(String value) {
-        return enabled() ? iso() : value;
-    }
+    public static String getRegion(String value) { return enabled() ? iso() : value; }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static Map spoofRegionMap(Map value) {
@@ -58,16 +47,10 @@ public class SpoofSimPatch {
         value.put("op_region", region);
         value.put("sys_region", region);
         value.put("current_region", region);
-        Logger.printDebug(() -> "Spoofing TikTok region map to: " + region);
         return value;
     }
 
-    public static String getCountryIso(String value) {
-        if (!enabled()) return value;
-        String result = iso();
-        Logger.printDebug(() -> "Spoofing countryIso from: " + value + " to: " + result);
-        return result;
-    }
+    public static String getCountryIso(String value) { return enabled() ? iso() : value; }
 
     public static String getOperator(String value) {
         if (!enabled()) return value;
@@ -87,15 +70,7 @@ public class SpoofSimPatch {
         return operator == null || operator.isEmpty() ? value : operator;
     }
 
-    public static int getCarrierId(int value) {
-        return value;
-    }
-
-    public static Locale getLocale(Locale value) {
-        return enabled() ? Locale.US : value;
-    }
-
-    public static TimeZone getTimeZone(TimeZone value) {
-        return enabled() ? TimeZone.getTimeZone("America/New_York") : value;
-    }
+    public static int getCarrierId(int value) { return value; }
+    public static Locale getLocale(Locale value) { return enabled() ? Locale.US : value; }
+    public static TimeZone getTimeZone(TimeZone value) { return enabled() ? TimeZone.getTimeZone("America/New_York") : value; }
 }
