@@ -40,14 +40,12 @@ val simSpoofPatch = bytecodePatch(
                 mutableClassDefBy(classDef.type).findMutableMethodOf(method).addInstructions(0, "invoke-static {p2}, $EXT->getLocale(Ljava/util/Locale;)Ljava/util/Locale;\nmove-result-object p2")
             }
         }
-
         classDefForEach { classDef ->
             if (classDef.type != REGION_SERVICE) return@classDefForEach
             classDef.methods.filter { it.name == "isInTikTokRegion" && it.returnType == "Z" && it.parameterTypes.isEmpty() }.forEach { method ->
                 mutableClassDefBy(classDef.type).findMutableMethodOf(method).addInstructions(0, "const/4 v0, 0x1\nreturn v0")
             }
         }
-
         val regionSourceMap = mapOf("LIZ" to "getRegion", "LIZIZ" to "getRegion", "LJ" to "getCountryIso", "LJFF" to "getCountryIso")
         classDefForEach { classDef ->
             if (classDef.type != REGION_SOURCE) return@classDefForEach
@@ -61,7 +59,6 @@ val simSpoofPatch = bytecodePatch(
                 }
             }
         }
-
         classDefForEach { classDef ->
             if (classDef.type != REGION_SOURCE) return@classDefForEach
             classDef.methods.filter { it.name == "LJIIIIZZ" && it.returnType == "Z" && it.parameterTypes.isEmpty() }.forEach { method ->
@@ -72,7 +69,6 @@ val simSpoofPatch = bytecodePatch(
                 }
             }
         }
-
         classDefForEach { classDef ->
             if (classDef.type != REGION_RESOLVER) return@classDefForEach
             classDef.methods.filter { it.name == "LIZ" && it.returnType == "Ljava/lang/String;" && it.parameterTypes.isEmpty() }.forEach { method ->
@@ -83,7 +79,6 @@ val simSpoofPatch = bytecodePatch(
                 }
             }
         }
-
         classDefForEach { classDef ->
             if (classDef.type != REGION_CONFIG) return@classDefForEach
             classDef.methods.filter { it.returnType == "Ljava/util/Map;" && it.parameterTypes.isEmpty() }.forEach { method ->
@@ -94,15 +89,7 @@ val simSpoofPatch = bytecodePatch(
                 }
             }
         }
-
-        val wrapperMap = mapOf(
-            "LIZJ" to "getCountryIso",
-            "LJIIIIZZ" to "getCountryIso",
-            "LJ" to "getOperator",
-            "LJIIJ" to "getOperator",
-            "LJI" to "getOperatorName",
-            "LJIIL" to "getOperatorName",
-        )
+        val wrapperMap = mapOf("LIZJ" to "getCountryIso", "LJIIIIZZ" to "getCountryIso", "LJ" to "getOperator", "LJIIJ" to "getOperator", "LJI" to "getOperatorName", "LJIIL" to "getOperatorName")
         classDefForEach { classDef ->
             if (classDef.type != WRAPPER) return@classDefForEach
             classDef.methods.forEach { method ->
@@ -116,21 +103,10 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // Restore the actual TelephonyManager call-site hooks. These are the critical
-        // carrier/SIM boundaries used by TikTok before the server request is made.
         val replacements = mapOf(
-            "getSimCountryIso" to "getCountryIso",
-            "getNetworkCountryIso" to "getCountryIso",
-            "getSimCountryIsoForPhone" to "getCountryIso",
-            "getNetworkCountryIsoForPhone" to "getCountryIso",
-            "getSimOperator" to "getOperator",
-            "getNetworkOperator" to "getOperator",
-            "getNetworkOperatorForPhone" to "getOperator",
-            "getSimOperatorNumeric" to "getOperator",
-            "getNetworkOperatorNumeric" to "getOperator",
-            "getSimOperatorName" to "getOperatorName",
-            "getNetworkOperatorName" to "getOperatorName",
-            "getNetworkOperatorNameForPhone" to "getOperatorName",
+            "getSimCountryIso" to "getCountryIso", "getNetworkCountryIso" to "getCountryIso", "getSimCountryIsoForPhone" to "getCountryIso", "getNetworkCountryIsoForPhone" to "getCountryIso",
+            "getSimOperator" to "getOperator", "getNetworkOperator" to "getOperator", "getNetworkOperatorForPhone" to "getOperator", "getSimOperatorNumeric" to "getOperator", "getNetworkOperatorNumeric" to "getOperator",
+            "getSimOperatorName" to "getOperatorName", "getNetworkOperatorName" to "getOperatorName", "getNetworkOperatorNameForPhone" to "getOperatorName",
         )
         val patches = linkedMapOf<Method, ArrayDeque<Pair<Int, String>>>()
         val carrierNames = linkedMapOf<Method, ArrayDeque<Int>>()
@@ -176,7 +152,7 @@ val simSpoofPatch = bytecodePatch(
                 val index = list.removeLast()
                 val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
                 val reg = next.registerA
-                mutable.addInstructions(index + 2, "$EXT->getCarrierId(I)I\nmove-result v$reg")
+                mutable.addInstructions(index + 2, "invoke-static {v$reg}, $EXT->getCarrierId(I)I\nmove-result v$reg")
             }
         }
         locales.forEach { (method, list) ->
@@ -197,7 +173,6 @@ val simSpoofPatch = bytecodePatch(
                 mutable.addInstructions(index + 2, "invoke-static {v$reg}, $EXT->getTimeZone(Ljava/util/TimeZone;)Ljava/util/TimeZone;\nmove-result-object v$reg")
             }
         }
-
         SettingsStatusLoadFingerprint.method.addInstruction(0, "invoke-static {}, Lapp/morphe/extension/tiktok/settings/SettingsStatus;->enableSimSpoof()V")
     }
 }
