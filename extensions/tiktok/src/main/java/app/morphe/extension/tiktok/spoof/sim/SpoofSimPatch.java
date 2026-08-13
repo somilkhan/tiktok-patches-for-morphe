@@ -16,14 +16,14 @@ import java.util.TimeZone;
 
 @SuppressWarnings("unused")
 public class SpoofSimPatch {
-    private static boolean isContextNotSet(String fieldSpoofed) {
-        if (Utils.getContext() != null) return false;
-        Logger.printException(() -> "Context is not yet set, cannot spoof: " + fieldSpoofed, null);
-        return true;
+    private static boolean enabled() {
+        return SettingsStatus.simSpoofEnabled ||
+                (Utils.getContext() != null && Settings.SIM_SPOOF.get());
     }
 
-    private static boolean enabled() {
-        return Utils.getContext() != null && (Settings.SIM_SPOOF.get() || SettingsStatus.simSpoofEnabled);
+    private static String iso() {
+        String value = Settings.SIM_SPOOF_ISO.get();
+        return value == null || value.isEmpty() ? "US" : value.toUpperCase(Locale.US);
     }
 
     public static boolean isInTikTokRegion() {
@@ -34,16 +34,24 @@ public class SpoofSimPatch {
         return enabled() ? true : value;
     }
 
+    public static boolean isUS(boolean value) {
+        return enabled() ? "US".equals(iso()) : value;
+    }
+
+    public static boolean isUK(boolean value) {
+        if (!enabled()) return value;
+        String region = iso();
+        return "GB".equals(region) || "UK".equals(region);
+    }
+
     public static String getRegion(String value) {
-        return getCountryIso(value);
+        return enabled() ? iso() : value;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static Map spoofRegionMap(Map value) {
         if (!enabled() || value == null) return value;
-        String iso = Settings.SIM_SPOOF_ISO.get();
-        if (iso == null || iso.isEmpty()) return value;
-        final String region = iso.toUpperCase(Locale.US);
+        final String region = iso();
         value.put("fake_region", region);
         value.put("carrier_region", region);
         value.put("region", region);
@@ -55,33 +63,22 @@ public class SpoofSimPatch {
     }
 
     public static String getCountryIso(String value) {
-        if (isContextNotSet("countryIso")) return value;
-        if (enabled()) {
-            String iso = Settings.SIM_SPOOF_ISO.get();
-            Logger.printDebug(() -> "Spoofing countryIso from: " + value + " to: " + iso);
-            return iso;
-        }
-        return value;
+        if (!enabled()) return value;
+        String result = iso();
+        Logger.printDebug(() -> "Spoofing countryIso from: " + value + " to: " + result);
+        return result;
     }
 
     public static String getOperator(String value) {
-        if (isContextNotSet("MCC-MNC")) return value;
-        if (enabled()) {
-            String mccMnc = Settings.SIMSPOOF_MCCMNC.get();
-            Logger.printDebug(() -> "Spoofing sim MCC-MNC from: " + value + " to: " + mccMnc);
-            return mccMnc;
-        }
-        return value;
+        if (!enabled()) return value;
+        String result = Settings.SIMSPOOF_MCCMNC.get();
+        return result == null || result.isEmpty() ? value : result;
     }
 
     public static String getOperatorName(String value) {
-        if (isContextNotSet("operatorName")) return value;
-        if (enabled()) {
-            String operator = Settings.SIMSPOOF_OP_NAME.get();
-            Logger.printDebug(() -> "Spoofing sim operatorName from: " + value + " to: " + operator);
-            return operator;
-        }
-        return value;
+        if (!enabled()) return value;
+        String result = Settings.SIMSPOOF_OP_NAME.get();
+        return result == null || result.isEmpty() ? value : result;
     }
 
     public static CharSequence getCarrierIdName(CharSequence value) {
@@ -95,12 +92,10 @@ public class SpoofSimPatch {
     }
 
     public static Locale getLocale(Locale value) {
-        if (!enabled()) return value;
-        return Locale.US;
+        return enabled() ? Locale.US : value;
     }
 
     public static TimeZone getTimeZone(TimeZone value) {
-        if (!enabled()) return value;
-        return TimeZone.getTimeZone("America/New_York");
+        return enabled() ? TimeZone.getTimeZone("America/New_York") : value;
     }
 }
