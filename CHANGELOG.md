@@ -1,3 +1,17 @@
+## [1.8.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.0...v1.8.1) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** correct telephony carrier hook invocation ([ee421f5](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/ee421f5122a144c3e6516166aeb5200fa9caa635))
+* **spoof:** restore critical telephony region hooks ([f360453](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/f360453d43bd2f730afc20e4fac7dfad5b163dac))
+
+
+
+
+
+## 1.8.1
+
 # [1.8.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.7.1...v1.8.0) (2026-08-13)
 
 
