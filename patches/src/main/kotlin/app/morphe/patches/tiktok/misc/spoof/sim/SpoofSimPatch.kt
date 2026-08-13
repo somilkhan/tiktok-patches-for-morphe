@@ -107,6 +107,7 @@ val simSpoofPatch = bytecodePatch(
             "getSimCountryIso" to "getCountryIso", "getNetworkCountryIso" to "getCountryIso", "getSimCountryIsoForPhone" to "getCountryIso", "getNetworkCountryIsoForPhone" to "getCountryIso",
             "getSimOperator" to "getOperator", "getNetworkOperator" to "getOperator", "getNetworkOperatorForPhone" to "getOperator", "getSimOperatorNumeric" to "getOperator", "getNetworkOperatorNumeric" to "getOperator",
             "getSimOperatorName" to "getOperatorName", "getNetworkOperatorName" to "getOperatorName", "getNetworkOperatorNameForPhone" to "getOperatorName",
+            "getNetworkSpecifier" to "getNetworkSpecifier",
         )
         val patches = linkedMapOf<Method, ArrayDeque<Pair<Int, String>>>()
         val carrierNames = linkedMapOf<Method, ArrayDeque<Int>>()
@@ -119,7 +120,8 @@ val simSpoofPatch = bytecodePatch(
                     if (instruction.opcode != Opcode.INVOKE_VIRTUAL && instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE && instruction.opcode != Opcode.INVOKE_STATIC) return@forEachIndexed
                     val ref = (instruction as ReferenceInstruction).reference as MethodReference
                     if (ref.definingClass == TELEPHONY) {
-                        if (ref.returnType == "Ljava/lang/String;" && replacements.containsKey(ref.name)) patches.getOrPut(method) { ArrayDeque() }.add(index to replacements.getValue(ref.name))
+                        if (ref.name == "getNetworkSpecifier" && ref.returnType == "Ljava/lang/String;" && ref.parameterTypes.isEmpty()) patches.getOrPut(method) { ArrayDeque() }.add(index to "getNetworkSpecifier")
+                        else if (ref.returnType == "Ljava/lang/String;" && replacements.containsKey(ref.name)) patches.getOrPut(method) { ArrayDeque() }.add(index to replacements.getValue(ref.name))
                         if (ref.returnType == "Ljava/lang/CharSequence;" && (ref.name == "getSimCarrierIdName" || ref.name == "getSimSpecificCarrierIdName")) carrierNames.getOrPut(method) { ArrayDeque() }.add(index)
                         if (ref.returnType == "I" && (ref.name == "getSimCarrierId" || ref.name == "getSimSpecificCarrierId")) carrierIds.getOrPut(method) { ArrayDeque() }.add(index)
                     }
