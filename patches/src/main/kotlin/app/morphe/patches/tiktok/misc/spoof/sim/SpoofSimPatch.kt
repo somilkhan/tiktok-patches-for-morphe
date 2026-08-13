@@ -7,7 +7,6 @@ package app.morphe.patches.tiktok.misc.spoof.sim
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
-import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.shared.compat.AppCompatibilities
 import app.morphe.patches.tiktok.misc.extension.sharedExtensionPatch
@@ -25,11 +24,13 @@ private const val TELEPHONY = "Landroid/telephony/TelephonyManager;"
 private const val REGION_RESOLVER = "LX/C35590hVz;"
 private const val REGION_CONFIG_PROVIDER = "LX/C379311yQ;"
 private const val TELEPHONY_WRAPPER = "LX/C34171AbR;"
+private const val LOCALE = "Ljava/util/Locale;"
+private const val TIME_ZONE = "Ljava/util/TimeZone;"
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Surgical Jaggu-style region spoof for TikTok 46.2.3: global region map, C35590hVz, C34171AbR, TelephonyManager.",
+    description = "Surgical Jaggu-style region spoof for TikTok 46.2.3: region config, locale, timezone, BPEA and TelephonyManager.",
     default = true,
 ) {
     dependsOn(
@@ -40,24 +41,16 @@ val simSpoofPatch = bytecodePatch(
     compatibleWith(*AppCompatibilities.tiktok4623())
 
     execute {
-        // ── Layer A: Region resolver C35590hVz.LIZ() ──
         classDefForEach { classDef ->
             if (classDef.type != REGION_RESOLVER) return@classDefForEach
             for (method in classDef.methods) {
-                if (method.name != "LIZ" ||
-                    method.returnType != "Ljava/lang/String;" ||
-                    method.parameterTypes.isNotEmpty()
-                ) continue
+                if (method.name != "LIZ" || method.returnType != "Ljava/lang/String;" || method.parameterTypes.isNotEmpty()) continue
                 val implementation = method.implementation ?: continue
                 val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
-
                 val returnIndices = mutableListOf<Int>()
                 implementation.instructions.forEachIndexed { index, instruction ->
-                    if (instruction.opcode == Opcode.RETURN_OBJECT) {
-                        returnIndices.add(index)
-                    }
+                    if (instruction.opcode == Opcode.RETURN_OBJECT) returnIndices.add(index)
                 }
-
                 returnIndices.asReversed().forEach { index ->
                     val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
                     mutableMethod.addInstructions(index, """
@@ -68,24 +61,16 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // ── Layer A2: global region/config map C379311yQ ──
-        // This class materializes the map containing fake_region, carrier_region,
-        // region and op_region. Patch the map at its boundary so the boot/config
-        // request sees the spoofed region before later resolvers run.
         classDefForEach { classDef ->
             if (classDef.type != REGION_CONFIG_PROVIDER) return@classDefForEach
             for (method in classDef.methods) {
                 if (method.returnType != "Ljava/util/Map;" || method.parameterTypes.isNotEmpty()) continue
                 val implementation = method.implementation ?: continue
                 val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
-
                 val returnIndices = mutableListOf<Int>()
                 implementation.instructions.forEachIndexed { index, instruction ->
-                    if (instruction.opcode == Opcode.RETURN_OBJECT) {
-                        returnIndices.add(index)
-                    }
+                    if (instruction.opcode == Opcode.RETURN_OBJECT) returnIndices.add(index)
                 }
-
                 returnIndices.asReversed().forEach { index ->
                     val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
                     mutableMethod.addInstructions(index, """
@@ -96,7 +81,6 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // ── Layer B: BPEA telephony wrapper C34171AbR — exact verified methods ──
         val wrapperStringReplacements = mapOf(
             "LIZJ" to "getCountryIso",
             "LJIIIIZZ" to "getCountryIso",
@@ -113,14 +97,10 @@ val simSpoofPatch = bytecodePatch(
                 if (method.returnType != "Ljava/lang/String;" || method.parameterTypes.isNotEmpty()) continue
                 val implementation = method.implementation ?: continue
                 val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
-
                 val returnIndices = mutableListOf<Int>()
                 implementation.instructions.forEachIndexed { index, instruction ->
-                    if (instruction.opcode == Opcode.RETURN_OBJECT) {
-                        returnIndices.add(index)
-                    }
+                    if (instruction.opcode == Opcode.RETURN_OBJECT) returnIndices.add(index)
                 }
-
                 returnIndices.asReversed().forEach { index ->
                     val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
                     mutableMethod.addInstructions(index, """
@@ -131,7 +111,6 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // ── Layer C: Android TelephonyManager fallback ──
         val stringReplacements = mapOf(
             "getSimCountryIso" to "getCountryIso",
             "getNetworkCountryIso" to "getCountryIso",
@@ -150,40 +129,34 @@ val simSpoofPatch = bytecodePatch(
         val patchesByMethod = linkedMapOf<Method, ArrayDeque<Pair<Int, String>>>()
         val carrierNamePatches = linkedMapOf<Method, ArrayDeque<Int>>()
         val carrierIdPatches = linkedMapOf<Method, ArrayDeque<Int>>()
+        val localePatches = linkedMapOf<Method, ArrayDeque<Int>>()
+        val timezonePatches = linkedMapOf<Method, ArrayDeque<Int>>()
 
         classDefForEach { classDef ->
             for (method in classDef.methods) {
                 val implementation = method.implementation ?: continue
                 implementation.instructions.forEachIndexed { index, instruction ->
-                    if (instruction.opcode != Opcode.INVOKE_VIRTUAL &&
-                        instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE &&
-                        instruction.opcode != Opcode.INVOKE_STATIC
-                    ) {
-                        return@forEachIndexed
+                    if (instruction.opcode != Opcode.INVOKE_VIRTUAL && instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE && instruction.opcode != Opcode.INVOKE_STATIC) return@forEachIndexed
+                    val reference = (instruction as ReferenceInstruction).reference as MethodReference
+
+                    if (reference.definingClass == TELEPHONY) {
+                        if (stringReplacements.containsKey(reference.name) && reference.returnType == "Ljava/lang/String;") {
+                            patchesByMethod.getOrPut(method) { ArrayDeque() }.add(index to stringReplacements.getValue(reference.name))
+                        }
+                        if ((reference.name == "getSimCarrierIdName" || reference.name == "getSimSpecificCarrierIdName") && reference.returnType == "Ljava/lang/CharSequence;") {
+                            carrierNamePatches.getOrPut(method) { ArrayDeque() }.add(index)
+                        }
+                        if ((reference.name == "getSimCarrierId" || reference.name == "getSimSpecificCarrierId") && reference.returnType == "I") {
+                            carrierIdPatches.getOrPut(method) { ArrayDeque() }.add(index)
+                        }
                     }
 
-                    val methodReference = (instruction as ReferenceInstruction).reference as MethodReference
-                    if (methodReference.definingClass != TELEPHONY) return@forEachIndexed
-
-                    if (stringReplacements.containsKey(methodReference.name) &&
-                        methodReference.returnType == "Ljava/lang/String;"
-                    ) {
-                        patchesByMethod.getOrPut(method) { ArrayDeque() }
-                            .add(index to stringReplacements.getValue(methodReference.name))
+                    if (reference.definingClass == LOCALE && reference.name == "getDefault" && reference.returnType == LOCALE && reference.parameterTypes.isEmpty()) {
+                        localePatches.getOrPut(method) { ArrayDeque() }.add(index)
                     }
 
-                    if ((methodReference.name == "getSimCarrierIdName" ||
-                            methodReference.name == "getSimSpecificCarrierIdName") &&
-                        methodReference.returnType == "Ljava/lang/CharSequence;"
-                    ) {
-                        carrierNamePatches.getOrPut(method) { ArrayDeque() }.add(index)
-                    }
-
-                    if ((methodReference.name == "getSimCarrierId" ||
-                            methodReference.name == "getSimSpecificCarrierId") &&
-                        methodReference.returnType == "I"
-                    ) {
-                        carrierIdPatches.getOrPut(method) { ArrayDeque() }.add(index)
+                    if (reference.definingClass == TIME_ZONE && reference.name == "getDefault" && reference.returnType == TIME_ZONE && reference.parameterTypes.isEmpty()) {
+                        timezonePatches.getOrPut(method) { ArrayDeque() }.add(index)
                     }
                 }
             }
@@ -227,6 +200,34 @@ val simSpoofPatch = bytecodePatch(
                 mutableMethod.addInstructions(index + 2, """
                     invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getCarrierId(I)I;
                     move-result v$resultRegister
+                """)
+            }
+        }
+
+        localePatches.forEach { (method, patches) ->
+            val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
+            while (patches.isNotEmpty()) {
+                val index = patches.removeLast()
+                val nextInstr = mutableMethod.getInstruction(index + 1)
+                if (nextInstr !is OneRegisterInstruction) continue
+                val resultRegister = nextInstr.registerA
+                mutableMethod.addInstructions(index + 2, """
+                    invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getLocale(Ljava/util/Locale;)Ljava/util/Locale;
+                    move-result-object v$resultRegister
+                """)
+            }
+        }
+
+        timezonePatches.forEach { (method, patches) ->
+            val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
+            while (patches.isNotEmpty()) {
+                val index = patches.removeLast()
+                val nextInstr = mutableMethod.getInstruction(index + 1)
+                if (nextInstr !is OneRegisterInstruction) continue
+                val resultRegister = nextInstr.registerA
+                mutableMethod.addInstructions(index + 2, """
+                    invoke-static {v$resultRegister}, $EXTENSION_CLASS_DESCRIPTOR->getTimeZone(Ljava/util/TimeZone;)Ljava/util/TimeZone;
+                    move-result-object v$resultRegister
                 """)
             }
         }
