@@ -9,6 +9,8 @@ import app.morphe.extension.shared.Logger;
 import app.morphe.extension.shared.Utils;
 import app.morphe.extension.tiktok.settings.Settings;
 
+import java.util.Map;
+
 @SuppressWarnings("unused")
 public class SpoofSimPatch {
     private static boolean isContextNotSet(String fieldSpoofed) {
@@ -28,6 +30,31 @@ public class SpoofSimPatch {
      */
     public static String getRegion(String value) {
         return getCountryIso(value);
+    }
+
+    /**
+     * Patch the region map produced by TikTok's global feature/config provider.
+     * C379311yQ exposes region signals including fake_region, carrier_region,
+     * region and op_region. Setting them at the map boundary is earlier and
+     * more direct than relying only on a later String resolver.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static Map spoofRegionMap(Map value) {
+        if (!enabled() || value == null) return value;
+
+        String iso = Settings.SIM_SPOOF_ISO.get();
+        if (iso == null || iso.isEmpty()) return value;
+        final String region = iso.toUpperCase(java.util.Locale.US);
+
+        value.put("fake_region", region);
+        value.put("carrier_region", region);
+        value.put("region", region);
+        value.put("op_region", region);
+        value.put("sys_region", region);
+        value.put("current_region", region);
+
+        Logger.printDebug(() -> "Spoofing TikTok region map to: " + region);
+        return value;
     }
 
     public static String getCountryIso(String value) {
