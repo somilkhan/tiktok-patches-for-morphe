@@ -1,3 +1,17 @@
+## [1.6.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.0...v1.6.1) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** add no-arg Jaggu region gate bridge ([ad3feb1](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/ad3feb1570bbd3d9184a9f3559ff62d576235ea8))
+* **spoof:** use no-arg Jaggu gate bridge to avoid smali lexer failure ([1ea26e3](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/1ea26e37ecb97445e4538685b8c1e07afcd605ed))
+
+
+
+
+
+## 1.6.1
+
 # [1.6.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.3...v1.6.0) (2026-08-13)
 
 
