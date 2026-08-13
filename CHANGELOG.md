@@ -1,3 +1,17 @@
+## [1.8.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.1...v1.8.2) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** hook recovered Jaggu networkSpecifier behavior ([71827ac](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/71827ac9b60446e96d2e4da76e4c79bae350017f))
+* **spoof:** recover Jaggu getNetworkSpecifier hook ([594f6ee](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/594f6ee80c443bcd1f600eb4fec58f50387855f8))
+
+
+
+
+
+## 1.8.2
+
 ## [1.8.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.0...v1.8.1) (2026-08-13)
 
 
