@@ -1,3 +1,16 @@
+## [1.6.5](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.4...v1.6.5) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** remove early context gate and complete region predicates ([9e9457f](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/9e9457f1c8c09fdd6f200de16c293891eb99fe94))
+
+
+
+
+
+## 1.6.5
+
 ## [1.6.4](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.3...v1.6.4) (2026-08-13)
 
 
