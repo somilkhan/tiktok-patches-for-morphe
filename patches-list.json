@@ -1,5 +1,5 @@
 {
-  "version": "1.5.2",
+  "version": "1.5.3",
   "appNames": {
     "com.zhiliaoapp.musically": "TikTok"
   },
@@ -615,7 +615,7 @@
     },
     {
       "name": "SIM spoof",
-      "description": "Surgical Jaggu-style region spoof for TikTok 46.2.3: global region map, C35590hVz, C34171AbR, TelephonyManager.",
+      "description": "Surgical Jaggu-style region spoof for TikTok 46.2.3: persisted region, region config, locale, timezone, BPEA and TelephonyManager.",
       "use": true,
       "dependencies": [
         "BytecodePatch",

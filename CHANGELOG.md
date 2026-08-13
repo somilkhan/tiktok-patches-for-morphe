@@ -1,3 +1,27 @@
+## [1.5.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.2...v1.5.3) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** activate Jaggu-style region layer via patch status ([71e5ba7](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/71e5ba7484d48f97fbaaeaf65a422bb27df79542))
+* **spoof:** add Jaggu-style internal region gate override ([85f1c0d](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/85f1c0dfe105a10aed1e806af23b0e9e8b85ad9e))
+* **spoof:** add locale and timezone region signals ([3076280](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/3076280ea5714f10e52cf0fef7e820cf7a7827f3))
+* **spoof:** force persisted 46.2.3 region locale ([d58c3bc](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/d58c3bcace67dd14d6b9d5ccb61c7410d0bd4c8a))
+* **spoof:** hook locale and timezone defaults ([6e295dd](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6e295ddc8fa817a1488a40de53007ebd20692e60))
+* **spoof:** hook verified 46.2.3 internal region gate ([31abf19](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/31abf195f6d6daf9ced8e28c3751a26a29f5d831))
+* **spoof:** replace unsupported getInstruction API ([6a2bf66](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6a2bf6623b263c20d10d66fb27392a9c3f528f3b))
+
+
+### Reverts
+
+* **spoof:** remove non-buildable internal gate hook ([71f7d99](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/71f7d997d8f16dcbdb853b52bf62d9f351b32599))
+
+
+
+
+
+## 1.5.3
+
 ## [1.5.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.1...v1.5.2) (2026-08-13)
 
 
