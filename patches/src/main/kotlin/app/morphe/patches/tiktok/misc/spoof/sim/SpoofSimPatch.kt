@@ -24,11 +24,12 @@ private const val REGION_SERVICE = "Lcom/ss/android/ugc/aweme/ecommerce/dependen
 private const val REGION_SOURCE = "LX/1C4Y;"
 private const val LOCALE = "Ljava/util/Locale;"
 private const val TIME_ZONE = "Ljava/util/TimeZone;"
+private const val INET_ADDRESS = "Ljava/net/InetAddress;"
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Jaggu-style region source, gate, persisted locale, and telephony spoof for TikTok 46.2.3.",
+    description = "Jaggu-style region source, gate, persisted locale, telephony spoof, and app-scoped DNS bypass for TikTok 46.2.3.",
     default = true,
 ) {
     dependsOn(sharedExtensionPatch, settingsPatch)
@@ -40,13 +41,13 @@ val simSpoofPatch = bytecodePatch(
             classDef.methods.filter {
                 it.name == "LIZIZ" && it.returnType == "V" && it.parameterTypes.size == 3 &&
                     it.parameterTypes[0] == "Landroid/content/Context;" &&
-                    it.parameterTypes[1] == "Ljava/lang/String;" && it.parameterTypes[2] == LOCALE
+                    it.parameterTypes[1] == "Ljava/lang/String;" &&
+                    it.parameterTypes[2] == LOCALE
             }.forEach { method ->
                 mutableClassDefBy(classDef.type).findMutableMethodOf(method).addInstructions(0, "invoke-static {p2}, $EXT->getLocale(Ljava/util/Locale;)Ljava/util/Locale;\nmove-result-object p2")
             }
         }
 
-        // Verified 46.2.3 gate. Jaggu forces this region-availability decision open.
         classDefForEach { classDef ->
             if (classDef.type != REGION_SERVICE) return@classDefForEach
             classDef.methods.filter { it.name == "isInTikTokRegion" && it.returnType == "Z" && it.parameterTypes.isEmpty() }.forEach { method ->
@@ -54,14 +55,7 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // Verified upstream 46.2.3 region source used by LocationDependencyService.
-        // Patch the actual source methods, not only the consumer gate.
-        val regionSourceMap = mapOf(
-            "LIZ" to "getRegion",
-            "LIZIZ" to "getRegion",
-            "LJ" to "getCountryIso",
-            "LJFF" to "getCountryIso",
-        )
+        val regionSourceMap = mapOf("LIZ" to "getRegion", "LIZIZ" to "getRegion", "LJ" to "getCountryIso", "LJFF" to "getCountryIso")
         classDefForEach { classDef ->
             if (classDef.type != REGION_SOURCE) return@classDefForEach
             classDef.methods.forEach { method ->
@@ -76,7 +70,6 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // Patch the boolean source behind LocationDependencyService.isInTikTokRegion().
         classDefForEach { classDef ->
             if (classDef.type != REGION_SOURCE) return@classDefForEach
             classDef.methods.filter { it.name == "LJIIIIZZ" && it.returnType == "Z" && it.parameterTypes.isEmpty() }.forEach { method ->
@@ -135,6 +128,9 @@ val simSpoofPatch = bytecodePatch(
         val carrierIds = linkedMapOf<Method, ArrayDeque<Int>>()
         val locales = linkedMapOf<Method, ArrayDeque<Int>>()
         val timezones = linkedMapOf<Method, ArrayDeque<Int>>()
+        val dnsAll = linkedMapOf<Method, ArrayDeque<Int>>()
+        val dnsOne = linkedMapOf<Method, ArrayDeque<Int>>()
+
         classDefForEach { classDef ->
             classDef.methods.forEach { method ->
                 method.implementation?.instructions?.forEachIndexed { index, instruction ->
@@ -147,9 +143,12 @@ val simSpoofPatch = bytecodePatch(
                     }
                     if (ref.definingClass == LOCALE && ref.name == "getDefault" && ref.returnType == LOCALE && ref.parameterTypes.isEmpty()) locales.getOrPut(method) { ArrayDeque() }.add(index)
                     if (ref.definingClass == TIME_ZONE && ref.name == "getDefault" && ref.returnType == TIME_ZONE && ref.parameterTypes.isEmpty()) timezones.getOrPut(method) { ArrayDeque() }.add(index)
+                    if (ref.definingClass == INET_ADDRESS && ref.name == "getAllByName" && ref.returnType == "[Ljava/net/InetAddress;" && ref.parameterTypes.size == 1 && ref.parameterTypes[0] == "Ljava/lang/String;") dnsAll.getOrPut(method) { ArrayDeque() }.add(index)
+                    if (ref.definingClass == INET_ADDRESS && ref.name == "getByName" && ref.returnType == "Ljava/net/InetAddress;" && ref.parameterTypes.size == 1 && ref.parameterTypes[0] == "Ljava/lang/String;") dnsOne.getOrPut(method) { ArrayDeque() }.add(index)
                 }
             }
         }
+
         patches.forEach { (method, list) ->
             val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (list.isNotEmpty()) {
@@ -190,6 +189,27 @@ val simSpoofPatch = bytecodePatch(
                 mutable.addInstructions(index + 2, "invoke-static {v$reg}, $EXT->getTimeZone(Ljava/util/TimeZone;)Ljava/util/TimeZone;\nmove-result-object v$reg")
             }
         }
+        dnsAll.forEach { (method, list) ->
+            val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
+            while (list.isNotEmpty()) {
+                val index = list.removeLast()
+                val result = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
+                val resultReg = result.registerA
+                val host = mutable.implementation!!.instructions.getOrNull(index - 1) as? OneRegisterInstruction ?: continue
+                mutable.addInstructions(index + 2, "invoke-static {v${host.registerA}, v$resultReg}, $EXT->resolveAll(Ljava/lang/String;[Ljava/net/InetAddress;)[Ljava/net/InetAddress;\nmove-result-object v$resultReg")
+            }
+        }
+        dnsOne.forEach { (method, list) ->
+            val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
+            while (list.isNotEmpty()) {
+                val index = list.removeLast()
+                val result = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
+                val resultReg = result.registerA
+                val host = mutable.implementation!!.instructions.getOrNull(index - 1) as? OneRegisterInstruction ?: continue
+                mutable.addInstructions(index + 2, "invoke-static {v${host.registerA}, v$resultReg}, $EXT->resolveOne(Ljava/lang/String;Ljava/net/InetAddress;)Ljava/net/InetAddress;\nmove-result-object v$resultReg")
+            }
+        }
+
         SettingsStatusLoadFingerprint.method.addInstruction(0, "invoke-static {}, Lapp/morphe/extension/tiktok/settings/SettingsStatus;->enableSimSpoof()V")
     }
 }
