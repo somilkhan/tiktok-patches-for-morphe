@@ -10,6 +10,8 @@ import app.morphe.extension.shared.Utils;
 import app.morphe.extension.tiktok.settings.Settings;
 
 import java.util.Map;
+import java.util.Locale;
+import java.util.TimeZone;
 
 @SuppressWarnings("unused")
 public class SpoofSimPatch {
@@ -23,28 +25,17 @@ public class SpoofSimPatch {
         return Utils.getContext() != null && Settings.SIM_SPOOF.get();
     }
 
-    /**
-     * Region resolver hook for TikTok 46.2.3 X.C35590hVz.LIZ().
-     * This method reads fake_region > carrier_region > sys_region > app_language
-     * and returns the effective 2-letter region code.
-     */
     public static String getRegion(String value) {
         return getCountryIso(value);
     }
 
-    /**
-     * Patch the region map produced by TikTok's global feature/config provider.
-     * C379311yQ exposes region signals including fake_region, carrier_region,
-     * region and op_region. Setting them at the map boundary is earlier and
-     * more direct than relying only on a later String resolver.
-     */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static Map spoofRegionMap(Map value) {
-        if (!enabled() || value == null) return value;
+        if (value == null) return value;
 
         String iso = Settings.SIM_SPOOF_ISO.get();
         if (iso == null || iso.isEmpty()) return value;
-        final String region = iso.toUpperCase(java.util.Locale.US);
+        final String region = iso.toUpperCase(Locale.US);
 
         value.put("fake_region", region);
         value.put("carrier_region", region);
@@ -95,5 +86,17 @@ public class SpoofSimPatch {
 
     public static int getCarrierId(int value) {
         return value;
+    }
+
+    /** Replace Locale.getDefault() result with a US locale when SIM spoof is enabled. */
+    public static Locale getLocale(Locale value) {
+        if (!enabled()) return value;
+        return Locale.US;
+    }
+
+    /** Replace TimeZone.getDefault() result with a US timezone when SIM spoof is enabled. */
+    public static TimeZone getTimeZone(TimeZone value) {
+        if (!enabled()) return value;
+        return TimeZone.getTimeZone("America/New_York");
     }
 }
