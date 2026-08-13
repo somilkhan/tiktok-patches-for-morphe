@@ -25,13 +25,14 @@ private const val REGION_RESOLVER = "LX/C35590hVz;"
 private const val REGION_CONFIG_PROVIDER = "LX/C379311yQ;"
 private const val TELEPHONY_WRAPPER = "LX/C34171AbR;"
 private const val PERSISTED_REGION = "LX/C215817xU;"
+private const val INTERNAL_REGION_SERVICE = "Lcom/ss/android/ugc/aweme/ecommerce/dependency/location/LocationDependencyService;"
 private const val LOCALE = "Ljava/util/Locale;"
 private const val TIME_ZONE = "Ljava/util/TimeZone;"
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Surgical Jaggu-style region spoof for TikTok 46.2.3: persisted region, region config, locale, timezone, BPEA and TelephonyManager.",
+    description = "Jaggu region-gate port for TikTok 46.2.3: force the verified internal isInTikTokRegion gate and mirror Jaggu's telephony/region layer.",
     default = true,
 ) {
     dependsOn(
@@ -57,6 +58,34 @@ val simSpoofPatch = bytecodePatch(
                     invoke-static {p2}, $EXTENSION_CLASS_DESCRIPTOR->getLocale(Ljava/util/Locale;)Ljava/util/Locale;
                     move-result-object p2
                 """)
+            }
+        }
+
+        // Jaggu 36.7.4 uses AVSettingsServiceImpl.isInTikTokRegion() as the
+        // region-availability gate. In 46.2.3 the same gate moved to the
+        // verified LocationDependencyService.isInTikTokRegion() method.
+        // Port the behavior directly: replace every returned boolean with the
+        // extension-controlled Jaggu result while preserving the original path.
+        classDefForEach { classDef ->
+            if (classDef.type != INTERNAL_REGION_SERVICE) return@classDefForEach
+            for (method in classDef.methods) {
+                if (method.name != "isInTikTokRegion" ||
+                    method.returnType != "Z" ||
+                    method.parameterTypes.isNotEmpty()
+                ) continue
+                val implementation = method.implementation ?: continue
+                val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
+                val returnIndices = mutableListOf<Int>()
+                implementation.instructions.forEachIndexed { index, instruction ->
+                    if (instruction.opcode == Opcode.RETURN) returnIndices.add(index)
+                }
+                returnIndices.asReversed().forEach { index ->
+                    val returnReg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
+                    mutableMethod.addInstructions(index, """
+                        invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->isInTikTokRegion(Z)Z;
+                        move-result v$returnReg
+                    """)
+                }
             }
         }
 
