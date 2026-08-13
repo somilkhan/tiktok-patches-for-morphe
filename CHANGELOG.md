@@ -1,3 +1,22 @@
+# [1.7.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.5...v1.7.0) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** use invoke argument registers for DoH hooks ([55712bf](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/55712bf2b96eca6f5c01a33f16ea0d2eef9f2216))
+
+
+### Features
+
+* **spoof:** add app-scoped DoH resolver for blocked DNS ([6c57192](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6c57192a96d1cd3060e44f2e16e929026027b719))
+* **spoof:** hook TikTok DNS through app-scoped DoH ([7aa10e8](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/7aa10e84edb18c621f37289a7e3d0420c4aa6533))
+
+
+
+
+
+## 1.7.0
+
 ## [1.6.5](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.4...v1.6.5) (2026-08-13)
 
 

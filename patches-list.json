@@ -1,5 +1,5 @@
 {
-  "version": "1.6.5",
+  "version": "1.7.0",
   "appNames": {
     "com.zhiliaoapp.musically": "TikTok"
   },
@@ -615,7 +615,7 @@
     },
     {
       "name": "SIM spoof",
-      "description": "Jaggu-style region source, gate, persisted locale, and telephony spoof for TikTok 46.2.3.",
+      "description": "Jaggu-style region source, gate, persisted locale, telephony spoof, and app-scoped DNS bypass for TikTok 46.2.3.",
       "use": true,
       "dependencies": [
         "BytecodePatch",
