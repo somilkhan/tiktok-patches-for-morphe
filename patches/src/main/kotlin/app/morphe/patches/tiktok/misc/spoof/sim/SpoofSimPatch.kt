@@ -42,9 +42,6 @@ val simSpoofPatch = bytecodePatch(
     compatibleWith(*AppCompatibilities.tiktok4623())
 
     execute {
-        // C215817xU.LIZIZ(Context, String, Locale) persists key_current_region.
-        // Force the Locale argument itself so TikTok cannot persist the device's
-        // original region before the later resolver/config hooks run.
         classDefForEach { classDef ->
             if (classDef.type != PERSISTED_REGION) return@classDefForEach
             for (method in classDef.methods) {
@@ -74,7 +71,7 @@ val simSpoofPatch = bytecodePatch(
                     if (instruction.opcode == Opcode.RETURN_OBJECT) returnIndices.add(index)
                 }
                 returnIndices.asReversed().forEach { index ->
-                    val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
+                    val returnReg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
                     mutableMethod.addInstructions(index, """
                         invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->getRegion(Ljava/lang/String;)Ljava/lang/String;
                         move-result-object v$returnReg
@@ -94,7 +91,7 @@ val simSpoofPatch = bytecodePatch(
                     if (instruction.opcode == Opcode.RETURN_OBJECT) returnIndices.add(index)
                 }
                 returnIndices.asReversed().forEach { index ->
-                    val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
+                    val returnReg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
                     mutableMethod.addInstructions(index, """
                         invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->spoofRegionMap(Ljava/util/Map;)Ljava/util/Map;
                         move-result-object v$returnReg
@@ -124,7 +121,7 @@ val simSpoofPatch = bytecodePatch(
                     if (instruction.opcode == Opcode.RETURN_OBJECT) returnIndices.add(index)
                 }
                 returnIndices.asReversed().forEach { index ->
-                    val returnReg = (mutableMethod.getInstruction(index) as OneRegisterInstruction).registerA
+                    val returnReg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
                     mutableMethod.addInstructions(index, """
                         invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->$replacement(Ljava/lang/String;)Ljava/lang/String;
                         move-result-object v$returnReg
@@ -188,7 +185,7 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val (index, replacement) = patches.removeLast()
-                val nextInstr = mutableMethod.getInstruction(index + 1)
+                val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
                 if (nextInstr !is OneRegisterInstruction) continue
                 val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
@@ -202,7 +199,7 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val index = patches.removeLast()
-                val nextInstr = mutableMethod.getInstruction(index + 1)
+                val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
                 if (nextInstr !is OneRegisterInstruction) continue
                 val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
@@ -216,7 +213,7 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val index = patches.removeLast()
-                val nextInstr = mutableMethod.getInstruction(index + 1)
+                val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
                 if (nextInstr !is OneRegisterInstruction) continue
                 val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
@@ -230,7 +227,7 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val index = patches.removeLast()
-                val nextInstr = mutableMethod.getInstruction(index + 1)
+                val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
                 if (nextInstr !is OneRegisterInstruction) continue
                 val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
@@ -244,7 +241,7 @@ val simSpoofPatch = bytecodePatch(
             val mutableMethod = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (patches.isNotEmpty()) {
                 val index = patches.removeLast()
-                val nextInstr = mutableMethod.getInstruction(index + 1)
+                val nextInstr = mutableMethod.implementation!!.instructions[index + 1]
                 if (nextInstr !is OneRegisterInstruction) continue
                 val resultRegister = nextInstr.registerA
                 mutableMethod.addInstructions(index + 2, """
