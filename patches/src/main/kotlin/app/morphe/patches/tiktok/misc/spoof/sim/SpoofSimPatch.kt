@@ -102,11 +102,20 @@ val simSpoofPatch = bytecodePatch(
                 }
             }
         }
-
+        // Jaggu native telephony behavior recovered from libiam.so.
         val replacements = mapOf(
-            "getSimCountryIso" to "getCountryIso", "getNetworkCountryIso" to "getCountryIso", "getSimCountryIsoForPhone" to "getCountryIso", "getNetworkCountryIsoForPhone" to "getCountryIso",
-            "getSimOperator" to "getOperator", "getNetworkOperator" to "getOperator", "getNetworkOperatorForPhone" to "getOperator", "getSimOperatorNumeric" to "getOperator", "getNetworkOperatorNumeric" to "getOperator",
-            "getSimOperatorName" to "getOperatorName", "getNetworkOperatorName" to "getOperatorName", "getNetworkOperatorNameForPhone" to "getOperatorName",
+            "getSimCountryIso" to "getCountryIso",
+            "getSimCountryIsoForPhone" to "getCountryIso",
+            "getNetworkCountryIso" to "getNetworkCountryIso",
+            "getNetworkCountryIsoForPhone" to "getNetworkCountryIso",
+            "getSimOperator" to "getOperator",
+            "getNetworkOperator" to "getNetworkOperator",
+            "getNetworkOperatorForPhone" to "getNetworkOperator",
+            "getSimOperatorNumeric" to "getOperator",
+            "getNetworkOperatorNumeric" to "getNetworkOperator",
+            "getSimOperatorName" to "getOperatorName",
+            "getNetworkOperatorName" to "getNetworkOperatorName",
+            "getNetworkOperatorNameForPhone" to "getNetworkOperatorName",
             "getNetworkSpecifier" to "getNetworkSpecifier",
         )
         val patches = linkedMapOf<Method, ArrayDeque<Pair<Int, String>>>()
@@ -120,8 +129,7 @@ val simSpoofPatch = bytecodePatch(
                     if (instruction.opcode != Opcode.INVOKE_VIRTUAL && instruction.opcode != Opcode.INVOKE_VIRTUAL_RANGE && instruction.opcode != Opcode.INVOKE_STATIC) return@forEachIndexed
                     val ref = (instruction as ReferenceInstruction).reference as MethodReference
                     if (ref.definingClass == TELEPHONY) {
-                        if (ref.name == "getNetworkSpecifier" && ref.returnType == "Ljava/lang/String;" && ref.parameterTypes.isEmpty()) patches.getOrPut(method) { ArrayDeque() }.add(index to "getNetworkSpecifier")
-                        else if (ref.returnType == "Ljava/lang/String;" && replacements.containsKey(ref.name)) patches.getOrPut(method) { ArrayDeque() }.add(index to replacements.getValue(ref.name))
+                        if (ref.returnType == "Ljava/lang/String;" && replacements.containsKey(ref.name)) patches.getOrPut(method) { ArrayDeque() }.add(index to replacements.getValue(ref.name))
                         if (ref.returnType == "Ljava/lang/CharSequence;" && (ref.name == "getSimCarrierIdName" || ref.name == "getSimSpecificCarrierIdName")) carrierNames.getOrPut(method) { ArrayDeque() }.add(index)
                         if (ref.returnType == "I" && (ref.name == "getSimCarrierId" || ref.name == "getSimSpecificCarrierId")) carrierIds.getOrPut(method) { ArrayDeque() }.add(index)
                     }
@@ -142,8 +150,7 @@ val simSpoofPatch = bytecodePatch(
         carrierNames.forEach { (method, list) ->
             val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (list.isNotEmpty()) {
-                val index = list.removeLast()
-                val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
+                val index = list.removeLast(); val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
                 val reg = next.registerA
                 mutable.addInstructions(index + 2, "invoke-static {v$reg}, $EXT->getCarrierIdName(Ljava/lang/CharSequence;)Ljava/lang/CharSequence;\nmove-result-object v$reg")
             }
@@ -151,8 +158,7 @@ val simSpoofPatch = bytecodePatch(
         carrierIds.forEach { (method, list) ->
             val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (list.isNotEmpty()) {
-                val index = list.removeLast()
-                val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
+                val index = list.removeLast(); val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
                 val reg = next.registerA
                 mutable.addInstructions(index + 2, "invoke-static {v$reg}, $EXT->getCarrierId(I)I\nmove-result v$reg")
             }
@@ -160,8 +166,7 @@ val simSpoofPatch = bytecodePatch(
         locales.forEach { (method, list) ->
             val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (list.isNotEmpty()) {
-                val index = list.removeLast()
-                val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
+                val index = list.removeLast(); val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
                 val reg = next.registerA
                 mutable.addInstructions(index + 2, "invoke-static {v$reg}, $EXT->getLocale(Ljava/util/Locale;)Ljava/util/Locale;\nmove-result-object v$reg")
             }
@@ -169,8 +174,7 @@ val simSpoofPatch = bytecodePatch(
         timezones.forEach { (method, list) ->
             val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (list.isNotEmpty()) {
-                val index = list.removeLast()
-                val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
+                val index = list.removeLast(); val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
                 val reg = next.registerA
                 mutable.addInstructions(index + 2, "invoke-static {v$reg}, $EXT->getTimeZone(Ljava/util/TimeZone;)Ljava/util/TimeZone;\nmove-result-object v$reg")
             }
