@@ -1,3 +1,16 @@
+## [1.6.4](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.3...v1.6.4) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** patch verified 46.2.3 upstream region source ([f4535e1](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/f4535e1121612aebf4b8c0ca1ee21bd73089cd84))
+
+
+
+
+
+## 1.6.4
+
 ## [1.6.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.2...v1.6.3) (2026-08-13)
 
 
