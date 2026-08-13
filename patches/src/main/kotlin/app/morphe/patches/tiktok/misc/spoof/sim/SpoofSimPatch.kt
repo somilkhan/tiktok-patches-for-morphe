@@ -24,13 +24,14 @@ private const val TELEPHONY = "Landroid/telephony/TelephonyManager;"
 private const val REGION_RESOLVER = "LX/C35590hVz;"
 private const val REGION_CONFIG_PROVIDER = "LX/C379311yQ;"
 private const val TELEPHONY_WRAPPER = "LX/C34171AbR;"
+private const val PERSISTED_REGION = "LX/C215817xU;"
 private const val LOCALE = "Ljava/util/Locale;"
 private const val TIME_ZONE = "Ljava/util/TimeZone;"
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Surgical Jaggu-style region spoof for TikTok 46.2.3: region config, locale, timezone, BPEA and TelephonyManager.",
+    description = "Surgical Jaggu-style region spoof for TikTok 46.2.3: persisted region, region config, locale, timezone, BPEA and TelephonyManager.",
     default = true,
 ) {
     dependsOn(
@@ -41,6 +42,27 @@ val simSpoofPatch = bytecodePatch(
     compatibleWith(*AppCompatibilities.tiktok4623())
 
     execute {
+        // C215817xU.LIZIZ(Context, String, Locale) persists key_current_region.
+        // Force the Locale argument itself so TikTok cannot persist the device's
+        // original region before the later resolver/config hooks run.
+        classDefForEach { classDef ->
+            if (classDef.type != PERSISTED_REGION) return@classDefForEach
+            for (method in classDef.methods) {
+                if (method.name != "LIZIZ" ||
+                    method.returnType != "V" ||
+                    method.parameterTypes.size != 3 ||
+                    method.parameterTypes[0] != "Landroid/content/Context;" ||
+                    method.parameterTypes[1] != "Ljava/lang/String;" ||
+                    method.parameterTypes[2] != LOCALE
+                ) continue
+                val mutableMethod = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
+                mutableMethod.addInstructions(0, """
+                    invoke-static {p2}, $EXTENSION_CLASS_DESCRIPTOR->getLocale(Ljava/util/Locale;)Ljava/util/Locale;
+                    move-result-object p2
+                """)
+            }
+        }
+
         classDefForEach { classDef ->
             if (classDef.type != REGION_RESOLVER) return@classDefForEach
             for (method in classDef.methods) {
