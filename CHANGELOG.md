@@ -1,3 +1,16 @@
+# [1.6.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.3...v1.6.0) (2026-08-13)
+
+
+### Features
+
+* **spoof:** port Jaggu region gate into 46.2.3 ([e987e9e](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/e987e9ef65cd70321648467c3569d38f0cb7962b))
+
+
+
+
+
+## 1.6.0
+
 ## [1.5.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.2...v1.5.3) (2026-08-13)
 
 

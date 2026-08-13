@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-08-13T11:01:17",
-  "description": "## [1.5.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.2...v1.5.3) (2026-08-13)\n\n\n### Bug Fixes\n\n* **spoof:** activate Jaggu-style region layer via patch status ([71e5ba7](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/71e5ba7484d48f97fbaaeaf65a422bb27df79542))\n* **spoof:** add Jaggu-style internal region gate override ([85f1c0d](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/85f1c0dfe105a10aed1e806af23b0e9e8b85ad9e))\n* **spoof:** add locale and timezone region signals ([3076280](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/3076280ea5714f10e52cf0fef7e820cf7a7827f3))\n* **spoof:** force persisted 46.2.3 region locale ([d58c3bc](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/d58c3bcace67dd14d6b9d5ccb61c7410d0bd4c8a))\n* **spoof:** hook locale and timezone defaults ([6e295dd](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6e295ddc8fa817a1488a40de53007ebd20692e60))\n* **spoof:** hook verified 46.2.3 internal region gate ([31abf19](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/31abf195f6d6daf9ced8e28c3751a26a29f5d831))\n* **spoof:** replace unsupported getInstruction API ([6a2bf66](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6a2bf6623b263c20d10d66fb27392a9c3f528f3b))\n\n\n### Reverts\n\n* **spoof:** remove non-buildable internal gate hook ([71f7d99](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/71f7d997d8f16dcbdb853b52bf62d9f351b32599))\n\n\n\n\n\n## 1.5.3",
-  "download_url": "https://github.com/somilkhan/tiktok-patches-for-morphe/releases/download/v1.5.3/patches-1.5.3.mpp",
+  "created_at": "2026-08-13T11:10:12",
+  "description": "# [1.6.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.3...v1.6.0) (2026-08-13)\n\n\n### Features\n\n* **spoof:** port Jaggu region gate into 46.2.3 ([e987e9e](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/e987e9ef65cd70321648467c3569d38f0cb7962b))\n\n\n\n\n\n## 1.6.0",
+  "download_url": "https://github.com/somilkhan/tiktok-patches-for-morphe/releases/download/v1.6.0/patches-1.6.0.mpp",
   "signature_download_url": "",
-  "version": "1.5.3"
+  "version": "1.6.0"
 }
