@@ -1,3 +1,16 @@
+## [1.7.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.7.0...v1.7.1) (2026-08-13)
+
+
+### Reverts
+
+* **spoof:** remove crashing DoH runtime layer ([4aa25c5](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/4aa25c596f77e39a0bdc1e329c890b2597ca90c7))
+
+
+
+
+
+## 1.7.1
+
 # [1.7.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.5...v1.7.0) (2026-08-13)
 
 
