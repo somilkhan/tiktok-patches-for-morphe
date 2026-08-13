@@ -21,13 +21,14 @@ private const val REGION_CONFIG = "LX/C379311yQ;"
 private const val WRAPPER = "LX/C34171AbR;"
 private const val PERSISTED = "LX/C215817xU;"
 private const val REGION_SERVICE = "Lcom/ss/android/ugc/aweme/ecommerce/dependency/location/LocationDependencyService;"
+private const val REGION_SOURCE = "LX/1C4Y;"
 private const val LOCALE = "Ljava/util/Locale;"
 private const val TIME_ZONE = "Ljava/util/TimeZone;"
 
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Jaggu-style region gate and telephony spoof for TikTok 46.2.3.",
+    description = "Jaggu-style region source, gate, persisted locale, and telephony spoof for TikTok 46.2.3.",
     default = true,
 ) {
     dependsOn(sharedExtensionPatch, settingsPatch)
@@ -45,12 +46,46 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // Verified 46.2.3 equivalent of Jaggu's internal region-availability gate.
-        // Force the boolean directly to avoid Morphe's empty-register lexer issue.
+        // Verified 46.2.3 gate. Jaggu forces this region-availability decision open.
         classDefForEach { classDef ->
             if (classDef.type != REGION_SERVICE) return@classDefForEach
             classDef.methods.filter { it.name == "isInTikTokRegion" && it.returnType == "Z" && it.parameterTypes.isEmpty() }.forEach { method ->
                 mutableClassDefBy(classDef.type).findMutableMethodOf(method).addInstructions(0, "const/4 v0, 0x1\nreturn v0")
+            }
+        }
+
+        // Verified upstream 46.2.3 region source used by LocationDependencyService.
+        // Patch the actual source methods, not only the consumer gate.
+        val regionSourceMap = mapOf(
+            "LIZ" to "getRegion",
+            "LIZIZ" to "getRegion",
+            "LJ" to "getCountryIso",
+            "LJFF" to "getCountryIso",
+        )
+        classDefForEach { classDef ->
+            if (classDef.type != REGION_SOURCE) return@classDefForEach
+            classDef.methods.forEach { method ->
+                val replacement = regionSourceMap[method.name] ?: return@forEach
+                if (method.parameterTypes.isNotEmpty() || method.returnType != "Ljava/lang/String;") return@forEach
+                val mutable = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
+                method.implementation?.instructions?.mapIndexedNotNull { i, ins -> if (ins.opcode == Opcode.RETURN_OBJECT) i else null }
+                    ?.asReversed()?.forEach { index ->
+                        val reg = (mutable.implementation!!.instructions[index] as OneRegisterInstruction).registerA
+                        mutable.addInstructions(index, "invoke-static {v$reg}, $EXT->$replacement(Ljava/lang/String;)Ljava/lang/String;\nmove-result-object v$reg")
+                    }
+            }
+        }
+
+        // Patch the boolean source behind LocationDependencyService.isInTikTokRegion().
+        classDefForEach { classDef ->
+            if (classDef.type != REGION_SOURCE) return@classDefForEach
+            classDef.methods.filter { it.name == "LJIIIIZZ" && it.returnType == "Z" && it.parameterTypes.isEmpty() }.forEach { method ->
+                val mutable = mutableClassDefBy(classDef.type).findMutableMethodOf(method)
+                method.implementation?.instructions?.mapIndexedNotNull { i, ins -> if (ins.opcode == Opcode.RETURN) i else null }
+                    ?.asReversed()?.forEach { index ->
+                        val reg = (mutable.implementation!!.instructions[index] as OneRegisterInstruction).registerA
+                        mutable.addInstructions(index, "invoke-static {v$reg}, $EXT->isInTikTokRegion(Z)Z\nmove-result v$reg")
+                    }
             }
         }
 
@@ -118,8 +153,7 @@ val simSpoofPatch = bytecodePatch(
         patches.forEach { (method, list) ->
             val mutable = mutableClassDefBy(method.definingClass).findMutableMethodOf(method)
             while (list.isNotEmpty()) {
-                val (index, name) = list.removeLast()
-                val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
+                val (index, name) = list.removeLast(); val next = mutable.implementation!!.instructions.getOrNull(index + 1) as? OneRegisterInstruction ?: continue
                 val reg = next.registerA
                 mutable.addInstructions(index + 2, "invoke-static {v$reg}, $EXT->$name(Ljava/lang/String;)Ljava/lang/String;\nmove-result-object v$reg")
             }
