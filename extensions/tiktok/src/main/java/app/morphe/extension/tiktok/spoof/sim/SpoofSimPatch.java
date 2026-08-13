@@ -25,6 +25,12 @@ public class SpoofSimPatch {
         return Utils.getContext() != null && Settings.SIM_SPOOF.get();
     }
 
+    /** Force TikTok's internal region gate to report that the current region is supported. */
+    public static boolean isInTikTokRegion(boolean value) {
+        if (!enabled()) return value;
+        return true;
+    }
+
     public static String getRegion(String value) {
         return getCountryIso(value);
     }
