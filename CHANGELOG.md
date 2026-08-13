@@ -1,3 +1,17 @@
+## [1.6.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.1...v1.6.2) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** fix Jaggu gate lexer syntax ([7a7d030](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/7a7d030b38b90c9ee4372aaf39440fd0e8a56dd4))
+* **spoof:** use lexer-safe single-line gate injection ([5198eff](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/5198eff74c63b8e1f37d28e742ae1bf60117b7ce))
+
+
+
+
+
+## 1.6.2
+
 ## [1.6.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.0...v1.6.1) (2026-08-13)
 
 
