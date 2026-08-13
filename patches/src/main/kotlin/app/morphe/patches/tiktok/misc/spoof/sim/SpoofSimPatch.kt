@@ -32,7 +32,7 @@ private const val TIME_ZONE = "Ljava/util/TimeZone;"
 @Suppress("unused")
 val simSpoofPatch = bytecodePatch(
     name = "SIM spoof",
-    description = "Jaggu region-gate port for TikTok 46.2.3: force the verified internal isInTikTokRegion gate and mirror Jaggu's telephony/region layer.",
+    description = "Jaggu-style region spoof for TikTok 46.2.3: internal region gate, persisted region, region config, locale, timezone, BPEA and TelephonyManager.",
     default = true,
 ) {
     dependsOn(
@@ -61,11 +61,8 @@ val simSpoofPatch = bytecodePatch(
             }
         }
 
-        // Jaggu 36.7.4 uses AVSettingsServiceImpl.isInTikTokRegion() as the
-        // region-availability gate. In 46.2.3 the same gate moved to the
-        // verified LocationDependencyService.isInTikTokRegion() method.
-        // Port the behavior directly: replace every returned boolean with the
-        // extension-controlled Jaggu result while preserving the original path.
+        // Jaggu's region-availability behavior: override the verified 46.2.3
+        // internal region gate directly, without relying on a guessed call site.
         classDefForEach { classDef ->
             if (classDef.type != INTERNAL_REGION_SERVICE) return@classDefForEach
             for (method in classDef.methods) {
@@ -82,7 +79,7 @@ val simSpoofPatch = bytecodePatch(
                 returnIndices.asReversed().forEach { index ->
                     val returnReg = (mutableMethod.implementation!!.instructions[index] as OneRegisterInstruction).registerA
                     mutableMethod.addInstructions(index, """
-                        invoke-static {v$returnReg}, $EXTENSION_CLASS_DESCRIPTOR->isInTikTokRegion(Z)Z;
+                        invoke-static {}, $EXTENSION_CLASS_DESCRIPTOR->isInTikTokRegion()Z;
                         move-result v$returnReg
                     """)
                 }
