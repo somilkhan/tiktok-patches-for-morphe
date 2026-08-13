@@ -22,11 +22,12 @@ public class SpoofSimPatch {
         return true;
     }
 
-    // The patch enables simSpoofEnabled during TikTok settings initialization.
-    // Treat that status flag as authoritative, matching the always-active Jaggu
-    // region layer, while still allowing the explicit Morphe setting to enable it.
     private static boolean enabled() {
         return Utils.getContext() != null && (Settings.SIM_SPOOF.get() || SettingsStatus.simSpoofEnabled);
+    }
+
+    public static boolean isInTikTokRegion() {
+        return enabled();
     }
 
     public static boolean isInTikTokRegion(boolean value) {
@@ -40,18 +41,15 @@ public class SpoofSimPatch {
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static Map spoofRegionMap(Map value) {
         if (!enabled() || value == null) return value;
-
         String iso = Settings.SIM_SPOOF_ISO.get();
         if (iso == null || iso.isEmpty()) return value;
         final String region = iso.toUpperCase(Locale.US);
-
         value.put("fake_region", region);
         value.put("carrier_region", region);
         value.put("region", region);
         value.put("op_region", region);
         value.put("sys_region", region);
         value.put("current_region", region);
-
         Logger.printDebug(() -> "Spoofing TikTok region map to: " + region);
         return value;
     }
