@@ -5,6 +5,28 @@
 
 * **spoof:** keep stable region layer before native network port ([6053e94](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6053e9402d529566098e64a5192875e49ef14400))
 * **spoof:** remove early context gate and complete region predicates ([9e9457f](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/9e9457f1c8c09fdd6f200de16c293891eb99fe94))
+* **spoof:** remove speculative network hooks and keep verified 46.2.3 patch ([cbabd1c](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/cbabd1c97874042db38a9500a4151700603b0e7d))
+* **spoof:** stabilize Jaggu network integration boundary ([d3bfbf4](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/d3bfbf4799c29623616efb56bd57620ca2105deb))
+
+
+### Features
+
+* **spoof:** add isolated Jaggu network compatibility helpers ([a895189](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/a895189fe443d033f3ac312b60e63425409deaf5))
+* **spoof:** add safe network-source boundaries for Jaggu port ([bc08f33](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/bc08f332afbcbe0241ee728bd2986a3e051e0072))
+
+
+
+
+
+## 1.7.0
+
+# [1.7.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.4...v1.7.0) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** keep stable region layer before native network port ([6053e94](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6053e9402d529566098e64a5192875e49ef14400))
+* **spoof:** remove early context gate and complete region predicates ([9e9457f](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/9e9457f1c8c09fdd6f200de16c293891eb99fe94))
 
 
 ### Features
