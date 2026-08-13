@@ -1,3 +1,17 @@
+## [1.5.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.1...v1.5.2) (2026-08-13)
+
+
+### Bug Fixes
+
+* **spoof:** hook 46.2.3 global region config provider ([6e5da81](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6e5da818abc852d7ed7d65d141ad07f1cfeb9c61))
+* **spoof:** override 46.2.3 global region config map ([ab6e7fc](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/ab6e7fc5b4821f7dd6e9a53c3fd58aa800049925))
+
+
+
+
+
+## 1.5.2
+
 ## [1.5.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.5.0...v1.5.1) (2026-08-12)
 
 
