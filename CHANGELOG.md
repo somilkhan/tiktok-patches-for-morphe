@@ -1,3 +1,25 @@
+# [1.8.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.7.1...v1.8.0) (2026-08-13)
+
+
+### Bug Fixes
+
+* **release:** continue after existing v1.7.0 tag ([41217de](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/41217dea39f7af933d7dfa85628f378b38bf529f))
+* **spoof:** keep stable region layer before native network port ([6053e94](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6053e9402d529566098e64a5192875e49ef14400))
+* **spoof:** remove speculative network hooks and keep verified 46.2.3 patch ([cbabd1c](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/cbabd1c97874042db38a9500a4151700603b0e7d))
+* **spoof:** stabilize Jaggu network integration boundary ([d3bfbf4](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/d3bfbf4799c29623616efb56bd57620ca2105deb))
+
+
+### Features
+
+* **spoof:** add isolated Jaggu network compatibility helpers ([a895189](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/a895189fe443d033f3ac312b60e63425409deaf5))
+* **spoof:** add safe network-source boundaries for Jaggu port ([bc08f33](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/bc08f332afbcbe0241ee728bd2986a3e051e0072))
+
+
+
+
+
+## 1.8.0
+
 # [1.7.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.6.4...v1.7.0) (2026-08-13)
 
 
