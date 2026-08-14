@@ -1,3 +1,17 @@
+# [1.9.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.3...v1.9.0) (2026-08-14)
+
+
+### Features
+
+* **tiktok:** add non-invasive region diagnostics helper ([5eb06d3](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/5eb06d30d088e7b7bb5f9b3804ca90ff9e6c3b7c))
+* **tiktok:** instrument region and telephony diagnostics ([28a4691](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/28a4691152fc04caa8ec916c1436e60d3a836084))
+
+
+
+
+
+## 1.9.0
+
 ## [1.8.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.2...v1.8.3) (2026-08-13)
 
 
