@@ -1,13 +1,10 @@
 package app.morphe.patches.shipsy.developeroptions
 
-import app.morphe.patcher.fingerprint.methodFingerprint
+import app.morphe.patcher.Fingerprint
 
-internal object Fingerprints {
-    val checkDeveloperOptionsSettings = methodFingerprint {
-        returnType = "Z"
-        custom { method, classDef ->
-            method.name == "checkDeveloperOptionsSettings" &&
-                classDef.type == "Lcom/shipsy/dtdc/riderapp/security/PlayIntegrityManager;"
-        }
-    }
-}
+internal object CheckDeveloperOptionsSettingsFingerprint : Fingerprint(
+    custom = { method, classDef ->
+        classDef.type == "Lcom/shipsy/dtdc/riderapp/security/PlayIntegrityManager;" &&
+            method.name == "checkDeveloperOptionsSettings"
+    },
+)
