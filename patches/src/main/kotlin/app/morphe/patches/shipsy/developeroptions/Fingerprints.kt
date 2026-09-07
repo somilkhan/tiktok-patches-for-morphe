@@ -3,7 +3,7 @@ package app.morphe.patches.shipsy.developeroptions
 import app.morphe.patcher.Fingerprint
 
 internal object CheckDeveloperOptionsSettingsFingerprint : Fingerprint(
-    definingClass = "Lcom/shipsy/dtdc/riderapp/security/PlayIntegrityManager;",
+    definingClass = "Lcom/shipsy/dtdc/riderapp/ui/activities/DominoMainLandingActivity;",
     name = "checkDeveloperOptionsSettings",
-    returnType = "Z",
+    returnType = "V",
 )
