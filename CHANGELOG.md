@@ -1,3 +1,17 @@
+## [1.9.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.2...v1.9.3) (2026-09-07)
+
+
+### Bug Fixes
+
+* **shipsy:** return void from developer-options guard ([0ca6120](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/0ca61208197ef439828efc1f9f9cf17d20de35ed))
+* **shipsy:** target actual developer-options method ([fb9c24d](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/fb9c24d640c3ce7ea7c00961c2ade348d635f601))
+
+
+
+
+
+## 1.9.3
+
 ## [1.9.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.1...v1.9.2) (2026-09-07)
 
 
