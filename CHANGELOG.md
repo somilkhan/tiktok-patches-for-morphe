@@ -1,3 +1,16 @@
+## [1.9.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.0...v1.9.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* publish current patch bundle for verification ([2ce5b56](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/2ce5b56e16beb66a12da46a26b9226ea4e3dfa70))
+
+
+
+
+
+## 1.9.1
+
 # [1.9.0](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.8.3...v1.9.0) (2026-08-14)
 
 
