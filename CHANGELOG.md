@@ -1,3 +1,16 @@
+## [1.9.2](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.1...v1.9.2) (2026-09-07)
+
+
+### Bug Fixes
+
+* **shipsy:** use declarative developer-options fingerprint ([e1c7a53](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/e1c7a533637a7bf8fa60933a98729fce0d47dc9c))
+
+
+
+
+
+## 1.9.2
+
 ## [1.9.1](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.0...v1.9.1) (2026-09-07)
 
 
