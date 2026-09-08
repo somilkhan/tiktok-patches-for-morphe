@@ -1,3 +1,17 @@
+## [1.9.4](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.3...v1.9.4) (2026-09-08)
+
+
+### Bug Fixes
+
+* **shipsy:** disable developer-options and mock-location filter ([6d30cd4](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6d30cd4cf67e732a20cd24737585dd5bdf63d320))
+* **shipsy:** fingerprint mock-location filter getter ([47c1afe](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/47c1afe5cd67b0246048a03169fee160bfce1354))
+
+
+
+
+
+## 1.9.4
+
 ## [1.9.3](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.2...v1.9.3) (2026-09-07)
 
 
