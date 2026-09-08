@@ -7,3 +7,9 @@ internal object CheckDeveloperOptionsSettingsFingerprint : Fingerprint(
     name = "checkDeveloperOptionsSettings",
     returnType = "V",
 )
+
+internal object FilterMockLocationFingerprint : Fingerprint(
+    definingClass = "Lcom/shipsy/ondemand/riderapp/framework/network/model/login/PingFilterConfig;",
+    name = "getFilter_mock_location",
+    returnType = "Ljava/lang/Boolean;",
+)
