@@ -13,3 +13,15 @@ internal object FilterMockLocationFingerprint : Fingerprint(
     name = "getFilter_mock_location",
     returnType = "Ljava/lang/Boolean;",
 )
+
+internal object ShouldEnableFakeGpsDetectionFingerprint : Fingerprint(
+    definingClass = "Lcom/shipsy/dtdc/riderapp/utils/RiderUtils;",
+    name = "shouldEnableFakeGpsDetection",
+    returnType = "Z",
+)
+
+internal object ShouldCheckoutForFakeGpsFingerprint : Fingerprint(
+    definingClass = "Lcom/shipsy/dtdc/riderapp/utils/RiderUtils;",
+    name = "shouldCheckoutForFakeGPS",
+    returnType = "Z",
+)
