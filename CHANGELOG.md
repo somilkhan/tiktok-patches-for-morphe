@@ -1,3 +1,17 @@
+## [1.9.5](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.4...v1.9.5) (2026-09-09)
+
+
+### Bug Fixes
+
+* **shipsy:** disable fake-GPS configuration gates ([b2da957](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/b2da9572710e7bbf4845870ffac2fb0f557768b8))
+* **shipsy:** fingerprint fake-GPS configuration gates ([6192958](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/619295837572b8c5bbd3bcead0474fb432456d8a))
+
+
+
+
+
+## 1.9.5
+
 ## [1.9.4](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.3...v1.9.4) (2026-09-08)
 
 

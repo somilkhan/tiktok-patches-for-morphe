@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-08T21:16:05",
-  "description": "## [1.9.4](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.3...v1.9.4) (2026-09-08)\n\n\n### Bug Fixes\n\n* **shipsy:** disable developer-options and mock-location filter ([6d30cd4](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/6d30cd4cf67e732a20cd24737585dd5bdf63d320))\n* **shipsy:** fingerprint mock-location filter getter ([47c1afe](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/47c1afe5cd67b0246048a03169fee160bfce1354))\n\n\n\n\n\n## 1.9.4",
-  "download_url": "https://github.com/somilkhan/tiktok-patches-for-morphe/releases/download/v1.9.4/patches-1.9.4.mpp",
+  "created_at": "2026-09-09T09:02:39",
+  "description": "## [1.9.5](https://github.com/somilkhan/tiktok-patches-for-morphe/compare/v1.9.4...v1.9.5) (2026-09-09)\n\n\n### Bug Fixes\n\n* **shipsy:** disable fake-GPS configuration gates ([b2da957](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/b2da9572710e7bbf4845870ffac2fb0f557768b8))\n* **shipsy:** fingerprint fake-GPS configuration gates ([6192958](https://github.com/somilkhan/tiktok-patches-for-morphe/commit/619295837572b8c5bbd3bcead0474fb432456d8a))\n\n\n\n\n\n## 1.9.5",
+  "download_url": "https://github.com/somilkhan/tiktok-patches-for-morphe/releases/download/v1.9.5/patches-1.9.5.mpp",
   "signature_download_url": "",
-  "version": "1.9.4"
+  "version": "1.9.5"
 }
